@@ -1,0 +1,26 @@
+# Spins up OWASP Juice Shop for local development and CI.
+# Image is pinned so a new upstream release can never silently break the suite
+# (see docs/test-strategy.md → Risks). Bump deliberately, then re-run regression.
+services:
+  juice-shop:
+    image: bkimminich/juice-shop:v17.1.1
+    container_name: juice-shop
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=unsafe # keeps all challenges/features enabled for testing
+    healthcheck:
+      # The image is distroless (no shell, no curl/wget) and node is NOT on $PATH —
+      # it lives at the entrypoint path /nodejs/bin/node — so probe with that.
+      test:
+        [
+          'CMD',
+          '/nodejs/bin/node',
+          '-e',
+          "require('http').get('http://localhost:3000/rest/admin/application-version', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped

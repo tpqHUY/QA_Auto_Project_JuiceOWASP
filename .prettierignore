@@ -1,0 +1,8 @@
+node_modules
+dist
+test-results
+playwright-report
+allure-results
+allure-report
+package-lock.json
+plan_juice_shop_playwright.md
