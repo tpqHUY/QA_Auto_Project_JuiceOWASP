@@ -27,6 +27,12 @@ test(
   'guest can register, shop and complete a purchase (API-verified)',
   { tag: ['@smoke', '@regression', '@e2e'] },
   async ({ page, user, address, card, basketApi, cardApi, orderApi }) => {
+    // This is a long, full-journey test driven entirely through the UI
+    // (register → login → search → basket → checkout → pay). It comfortably
+    // fits the default 45s locally, but slower CI runners need more headroom,
+    // so triple the timeout rather than leave it flaky on CI.
+    test.slow();
+
     // 1. Register (UI) → app routes to the login page.
     const register = new RegisterPage(page);
     await register.goto();
