@@ -30,13 +30,34 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
-  reporter: IS_CI
-    ? [['list'], ['html', { open: 'never' }], ['github']]
-    : [['list'], ['html', { open: 'never' }]],
+  /**
+   * Reporters:
+   * - `list` for live console output everywhere.
+   * - `html` always generated (never auto-opens) — `npm run report`.
+   * - `allure-playwright` emits `allure-results/`, turned into the public trend
+   *   report published to GitHub Pages by the nightly workflow.
+   * - `github` annotations only in CI.
+   */
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+    [
+      'allure-playwright',
+      {
+        resultsDir: 'allure-results',
+        environmentInfo: {
+          App: 'OWASP Juice Shop v17.1.1',
+          Framework: 'Playwright + TypeScript',
+          BaseURL: BASE_URL,
+        },
+      },
+    ],
+    ...(IS_CI ? [['github'] as const] : []),
+  ],
   use: {
     baseURL: BASE_URL,
     actionTimeout: 10_000,
-    navigationTimeout: 20_000,
+    navigationTimeout: 30_000,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

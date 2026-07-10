@@ -1,0 +1,108 @@
+name: nightly-regression
+
+# Full @regression suite across all three browser engines every night, with an
+# Allure trend report published to GitHub Pages. Smoke (chromium only) runs
+# per-push in smoke.yml; this is the deep, cross-browser safety net.
+on:
+  schedule:
+    - cron: '0 18 * * *' # 18:00 UTC ≈ 01:00 Vietnam time
+  workflow_dispatch:
+
+# Never let two nightly runs publish the report at once.
+concurrency:
+  group: nightly-regression
+  cancel-in-progress: false
+
+permissions:
+  contents: write # required to push the report to the gh-pages branch
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Java (Allure report generation needs a JRE)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright (all engines + OS deps)
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Start Juice Shop
+        run: docker compose up -d
+
+      - name: Wait for Juice Shop to be ready
+        run: npm run app:wait
+
+      # Fresh container ⇒ full product stock, so cross-browser ordering tests
+      # never hit Juice Shop's finite stock (see docs/exploratory-notes.md).
+      - name: Run @regression across all browsers
+        id: regression
+        run: npx playwright test --grep @regression
+        continue-on-error: true
+
+      - name: Tear down Juice Shop
+        if: always()
+        run: docker compose down
+
+      # --- Publish Allure report to GitHub Pages (with trend history) ---
+      - name: Fetch previous report for history
+        if: always()
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Generate Allure report (preserving trend history)
+        if: always()
+        run: |
+          if [ -d gh-pages/history ]; then
+            cp -r gh-pages/history allure-results/history
+          fi
+          npx allure generate allure-results --clean -o allure-report
+
+      - name: Publish report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./allure-report
+          publish_branch: gh-pages
+
+      - name: Upload raw reports as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-reports
+          path: |
+            allure-report/
+            playwright-report/
+          retention-days: 14
+
+      # Make the job red if any test failed (report is already published above).
+      - name: Fail job if regression failed
+        if: steps.regression.outcome == 'failure'
+        run: |
+          echo "Regression suite had failures — see the published Allure report."
+          exit 1

@@ -8,14 +8,14 @@
 
 Framework được chia thành các **tầng (layer)** rõ ràng, mỗi tầng có một trách nhiệm duy nhất. Cách dễ nhớ: dữ liệu đi **từ dưới lên** (data -> API -> fixture -> test), còn quyền điều khiển đi **từ trên xuống** (config -> fixture -> POM/API -> app).
 
-| Tầng | Trách nhiệm | Thư mục chính |
-|---|---|---|
-| **Startup & Config** | Dựng app (Docker), chờ app sẵn sàng, Playwright đọc config | `docker-compose.yml`, `scripts/wait-for-app.mjs`, `playwright.config.ts` |
-| **Fixture chain** | Setup per-test: dismiss overlay, tạo user, API client, login, inject session | `src/fixtures/` |
-| **Page Object Model (POM)** | Trừu tượng hóa UI thành method "đọc như nghiệp vụ" | `src/pages/` |
-| **API client (typed)** | Gọi HTTP có kiểu, validate contract bằng zod | `src/api/` |
-| **Data layer** | Hằng số, faker factory, currency helper | `src/data/`, `src/utils/` |
-| **Tests** | Spec thật (UI + API + security) | `tests/` |
+| Tầng                        | Trách nhiệm                                                                  | Thư mục chính                                                            |
+| --------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Startup & Config**        | Dựng app (Docker), chờ app sẵn sàng, Playwright đọc config                   | `docker-compose.yml`, `scripts/wait-for-app.mjs`, `playwright.config.ts` |
+| **Fixture chain**           | Setup per-test: dismiss overlay, tạo user, API client, login, inject session | `src/fixtures/`                                                          |
+| **Page Object Model (POM)** | Trừu tượng hóa UI thành method "đọc như nghiệp vụ"                           | `src/pages/`                                                             |
+| **API client (typed)**      | Gọi HTTP có kiểu, validate contract bằng zod                                 | `src/api/`                                                               |
+| **Data layer**              | Hằng số, faker factory, currency helper                                      | `src/data/`, `src/utils/`                                                |
+| **Tests**                   | Spec thật (UI + API + security)                                              | `tests/`                                                                 |
 
 > [!NOTE]
 > **Nguyên tắc xương sống:** mỗi test sở hữu dữ liệu riêng (throwaway user), login qua API chứ không qua form, và state của session được **inject** thẳng vào browser. Nhờ vậy toàn bộ suite chạy **song song an toàn** mà không cần cleanup.
@@ -77,14 +77,15 @@ Trước khi bất cứ test nào chạy, phải có một app Juice Shop **đan
 Script `app:up` chạy `docker compose up -d`. File `docker-compose.yml` định nghĩa **một** service `juice-shop`:
 
 ```yaml
-image: bkimminich/juice-shop:v17.1.1   # image duoc PIN
+image: bkimminich/juice-shop:v17.1.1 # image duoc PIN
 ports: ['3000:3000']
 environment:
-  NODE_ENV: unsafe                       # giu tat ca challenge/feature BAT
+  NODE_ENV: unsafe # giu tat ca challenge/feature BAT
 restart: unless-stopped
 ```
 
 **Lý do thiết kế:**
+
 - **Pin image tag `v17.1.1`**: một bản release mới từ upstream sẽ không bao giờ **âm thầm** làm vỡ suite. Muốn nâng cấp phải có chủ định, và sau đó chạy lại regression.
 - **`NODE_ENV=unsafe`**: bắt buộc, để các security challenge vẫn được bật cho test tương tác. Nếu để env thường, app sẽ tắt các challenge mà test dựa vào.
 
@@ -107,6 +108,7 @@ interval: 10s   timeout: 5s   retries: 12   start_period: 20s
 Script `app:wait` chạy `node scripts/wait-for-app.mjs`. Script poll `${BASE_URL}/rest/admin/application-version` (mặc định `http://localhost:3000`) mỗi `INTERVAL_MS = 3_000`ms, coi HTTP 200 là up. Mỗi request dùng `req.setTimeout(4_000)`; vòng lặp tối đa `WAIT_TIMEOUT_MS` (mặc định `120_000`ms) rồi `process.exit(0)` khi thành công (in số giây) hoặc `process.exit(1)` khi timeout.
 
 **Lý do thiết kế:**
+
 - Là **cổng sẵn sàng hướng caller**, dùng cả local lẫn CI sau `docker compose up -d` — test không bao giờ chạy vào app chưa ready.
 - Tách rời và có thể override qua env (`BASE_URL`, `WAIT_TIMEOUT_MS`), nên cùng script cho local Docker, CI, hoặc target từ xa.
 - Viết dạng ESM (`.mjs`), chỉ dùng `node:http`, **không phụ thuộc** (vì `package.json` có `type: module`).
@@ -153,6 +155,7 @@ workers: IS_CI ? 2 : 4,
 ```
 
 **Lý do (rất quan trọng):**
+
 - `fullyParallel` an toàn **chỉ vì** test dùng per-test data factory — không có shared mutable state giữa các worker.
 - Worker cap là **quyết định ổn định, không phải con số tùy tiện**: Juice Shop là **một** container trên nền **SQLite**. Quá nhiều worker sẽ làm quá tải app, gây **load-induced timeout** — trông như fail nhưng không phải fail thật. Cap vừa phải giữ suite vừa song song vừa ổn định, vẫn xong dưới 10 phút.
 
@@ -167,11 +170,11 @@ retries: IS_CI ? 2 : 1,
 
 ### 3.6 Timeouts phân tầng
 
-| Mức | Giá trị |
-|---|---|
-| Per-test `timeout` | 45_000 (45s) |
-| `expect.timeout` | 10_000 (10s) |
-| `actionTimeout` | 10_000 (10s) |
+| Mức                 | Giá trị      |
+| ------------------- | ------------ |
+| Per-test `timeout`  | 45_000 (45s) |
+| `expect.timeout`    | 10_000 (10s) |
+| `actionTimeout`     | 10_000 (10s) |
 | `navigationTimeout` | 20_000 (20s) |
 
 **Lý do:** ngân sách phân tầng — fail nhanh ở action/assertion bị kẹt (10s) nhưng chờ navigation cả trang chậm hơn (20s), tất cả roll-up vào trần 45s. Cân bằng giữa feedback fail nhanh và thời gian load thực của Juice Shop.
@@ -218,10 +221,15 @@ Playwright quét `testDir: './tests'`, thu thập mọi file `*.spec.ts`, rồi 
 
 ```ts
 page: async ({ page, context }, use) => {
-  await context.addCookies(DISMISS_COOKIES.map((c) => ({
-    name: c.name, value: c.value, url: env.baseURL })));
+  await context.addCookies(
+    DISMISS_COOKIES.map((c) => ({
+      name: c.name,
+      value: c.value,
+      url: env.baseURL,
+    }))
+  );
   await use(page);
-}
+};
 ```
 
 **Lý do:** Juice Shop render welcome banner + cookie bar khi load lần đầu; set đúng cookie app kiểm tra nghĩa là overlay không bao giờ render — không test nào tốn thời gian (hay flake) click tắt. Override chính fixture **mặc định** khiến việc này tự động cho mọi test dùng `page`.
@@ -250,15 +258,19 @@ Ba fixture, mỗi cái gọi một faker factory: `user -> makeUser()`, `address
 ### 5.5 Layer 2 — `loggedInPage`: storageState injection
 
 Phụ thuộc `browser` + `session`. Nó tạo context **mới** qua `browser.newContext()`, rồi:
+
 1. `addCookies`: dismiss cookies + cookie `token` = `session.token`, scope `env.baseURL`.
 2. `addInitScript` chạy trước app code ở mỗi navigation, ghi `localStorage['token']=session.token` và `sessionStorage['bid']=String(session.bid)`.
 3. `context.newPage()`, `await use(page)`, teardown `context.close()`.
 
 ```ts
-await context.addInitScript(([token, bid, tokenKey, bidKey]) => {
-  window.localStorage.setItem(tokenKey, token);
-  window.sessionStorage.setItem(bidKey, bid);
-}, [session.token, String(session.bid), STORAGE.tokenKey, STORAGE.basketIdKey]);
+await context.addInitScript(
+  ([token, bid, tokenKey, bidKey]) => {
+    window.localStorage.setItem(tokenKey, token);
+    window.sessionStorage.setItem(bidKey, bid);
+  },
+  [session.token, String(session.bid), STORAGE.tokenKey, STORAGE.basketIdKey]
+);
 const page = await context.newPage();
 await use(page);
 await context.close();
@@ -307,12 +319,12 @@ export abstract class BasePage {
 
 ### 6.2 Component object vs Page object
 
-| | Page object | Component object |
-|---|---|---|
-| Bản chất | Màn hình bạn **điều hướng TỚI** | Widget bạn **compose VÀO** page |
-| Có `goto()`? | Có | Không |
-| Extends BasePage? | Có | Không (plain class) |
-| Ví dụ | LoginPage, HomePage, BasketPage, RegisterPage, ForgotPasswordPage | `NavbarComponent`, `ProductDetailsComponent` |
+|                   | Page object                                                       | Component object                             |
+| ----------------- | ----------------------------------------------------------------- | -------------------------------------------- |
+| Bản chất          | Màn hình bạn **điều hướng TỚI**                                   | Widget bạn **compose VÀO** page              |
+| Có `goto()`?      | Có                                                                | Không                                        |
+| Extends BasePage? | Có                                                                | Không (plain class)                          |
+| Ví dụ             | LoginPage, HomePage, BasketPage, RegisterPage, ForgotPasswordPage | `NavbarComponent`, `ProductDetailsComponent` |
 
 **Lý do:** `NavbarComponent` có mặt trên **mọi** page và được compose vào (`this.navbar = new NavbarComponent(page)`) — quan hệ **has-a**, không phải inheritance. `ProductDetailsComponent` root là `mat-dialog-container` (một **modal**, không phải route), nên không thể là page object có `goto()`; child locator scope trong `this.dialog` để không khớp nhầm element sau modal.
 
@@ -339,8 +351,12 @@ forgotPasswordLink = page.getByRole('link', { name: /forgot your password/i });
 ```ts
 for (let attempt = 0; attempt < 3; attempt++) {
   await this.securityQuestionSelect.click();
-  try { await option.waitFor({ state: 'visible', timeout: 3000 }); break; }
-  catch { await this.page.keyboard.press('Escape').catch(() => {}); }
+  try {
+    await option.waitFor({ state: 'visible', timeout: 3000 });
+    break;
+  } catch {
+    await this.page.keyboard.press('Escape').catch(() => {});
+  }
 }
 ```
 
@@ -398,11 +414,11 @@ return res;   // tra RAW response dau
 
 Mỗi client có **hai vị**: biến **raw** trả `APIResponse` (cho assert status + negative test) và biến **parsed** chạy zod trả domain data có kiểu.
 
-| Client | raw | parsed |
-|---|---|---|
-| AuthApi | `login()`, `register()` | `createAndLogin()` (throw neu non-2xx) |
-| ProductApi | `listRaw()`, `searchRaw()` | `list()`, `search()`, `getById()`, `first()` |
-| BasketApi | `getRaw()`, `addItemRaw()`, `removeItemRaw()` | `get()`, `quantityOf()`, `lineCount()` |
+| Client     | raw                                           | parsed                                       |
+| ---------- | --------------------------------------------- | -------------------------------------------- |
+| AuthApi    | `login()`, `register()`                       | `createAndLogin()` (throw neu non-2xx)       |
+| ProductApi | `listRaw()`, `searchRaw()`                    | `list()`, `search()`, `getById()`, `first()` |
+| BasketApi  | `getRaw()`, `addItemRaw()`, `removeItemRaw()` | `get()`, `quantityOf()`, `lineCount()`       |
 
 **Lý do:** hai vị phục vụ hai nhu cầu đối lập. Raw = API spec assert status/error shape. Parsed = "cho tôi user đã login"/assertion positive, fail **loud** (throw) tại setup. `createAndLogin` còn bắt `bid` (basket id) từ login body — cái `loggedInPage` cần inject vào storage.
 
@@ -432,9 +448,9 @@ Mỗi client có **hai vị**: biến **raw** trả `APIResponse` (cho assert st
 ### 8.3 currency helper (`src/utils/currency.ts`) — float noise
 
 ```ts
-parsePrice(text)  // '1.99¤' -> 1.99; throw neu empty/non-numeric; replace(',', '.')
-roundMoney(v)     // Math.round((v + Number.EPSILON) * 100) / 100  (half-up)
-calcTotal(items)  // sum(price*quantity) -> roundMoney
+parsePrice(text); // '1.99¤' -> 1.99; throw neu empty/non-numeric; replace(',', '.')
+roundMoney(v); // Math.round((v + Number.EPSILON) * 100) / 100  (half-up)
+calcTotal(items); // sum(price*quantity) -> roundMoney
 ```
 
 **Lý do:** app render tiền là text có placeholder tiền tệ (`¤`); assertion cần số thật. `roundMoney` giết float noise như `6.970000000000001` (chính Juice Shop lộ ra) — cộng `Number.EPSILON` trước khi scale để nứt giá trị ngay dưới biên làm tròn lên đúng. `calcTotal` tái sử dụng `roundMoney` -> một chính sách rounding duy nhất toàn codebase.
@@ -449,7 +465,8 @@ calcTotal(items)  // sum(price*quantity) -> roundMoney
 Đây là mẫu **chữ ký** của framework: drive browser làm một action, rồi **đọc backend qua HTTP** để chứng minh server đồng ý. Minh họa bằng test thật trong `tests/ui/basket/basket.spec.ts` — "thêm sản phẩm từ catalog vào basket":
 
 ```ts
-test('adding a product from the catalog puts it in the basket',
+test(
+  'adding a product from the catalog puts it in the basket',
   { tag: ['@smoke', '@regression'] },
   async ({ loggedInPage, session, basketApi }) => {
     // 1) basketApi la instance RIENG voi authApi -> phai set token
@@ -457,22 +474,24 @@ test('adding a product from the catalog puts it in the basket',
 
     // 2) UI: navigate + THE UI ACTION
     const home = new HomePage(loggedInPage);
-    await home.goto();                                  // open('/#/search') + dismissOverlays + waitFor card
-    const name = await home.addFirstProductToBasket();  // doc ten, click Add, tra ten
+    await home.goto(); // open('/#/search') + dismissOverlays + waitFor card
+    const name = await home.addFirstProductToBasket(); // doc ten, click Add, tra ten
 
     // 3) THE API VERIFY: doc backend basket, retry cho consistency
-    await expect.poll(async () =>
-      (await basketApi.get(session.bid)).Products.map((p) => p.name)
-    ).toContain(name);
+    await expect
+      .poll(async () => (await basketApi.get(session.bid)).Products.map((p) => p.name))
+      .toContain(name);
 
     // 4) Cross-check UI: row hien trong basket page
     const basket = new BasketPage(loggedInPage);
     await basket.goto();
     await expect(basket.row(name)).toBeVisible();
-  });
+  }
+);
 ```
 
 Giải thích từng dòng:
+
 - **`basketApi.setToken(session.token)`** (bắt buộc): `basketApi` và `authApi` (đã login) là hai instance `BaseApi` **riêng biệt**, token không được chia sẻ. Thiếu dòng này -> GET `/rest/basket/:bid` **unauthorized**.
 - **`home.addFirstProductToBasket()`** là action người dùng thật: click thật trên nút catalog thật, trả tên để assert đúng sản phẩm đã thêm.
 - **`expect.poll(... basketApi.get(session.bid) ...)`** là **crux**: sau khi drive UI, nó chứng minh server **thực sự persist** thay đổi — bắt lớp bug mà UI-only (render lạc quan) hoặc API-only bỏ lỡ. Mỗi lần poll: `httpGet /rest/basket/:bid` (có bearer) -> zod-parse `BasketResponseSchema` -> map tên. `session.bid` từ login response trỏ đúng basket mà `sessionStorage['bid']` của UI trỏ tới.
@@ -487,12 +506,12 @@ Giải thích từng dòng:
 
 Framework **không có hard wait/sleep**. Readiness dùng web-first primitive:
 
-| Nhu cầu | Công cụ | Ví dụ |
-|---|---|---|
-| Chờ element render | `locator.waitFor()` | `home.goto()` chờ card đầu |
-| Assert UI trạng thái | `expect(locator).toBeVisible/toHaveText/toHaveCount` | `basket.row(name)` |
-| Chờ giá trị fetch qua HTTP | `expect.poll(async fn)` | đọc backend basket |
-| Chờ lookup async UI | `waitFor({ state: 'visible' })` | field answer forgot-password |
+| Nhu cầu                    | Công cụ                                              | Ví dụ                        |
+| -------------------------- | ---------------------------------------------------- | ---------------------------- |
+| Chờ element render         | `locator.waitFor()`                                  | `home.goto()` chờ card đầu   |
+| Assert UI trạng thái       | `expect(locator).toBeVisible/toHaveText/toHaveCount` | `basket.row(name)`           |
+| Chờ giá trị fetch qua HTTP | `expect.poll(async fn)`                              | đọc backend basket           |
+| Chờ lookup async UI        | `waitFor({ state: 'visible' })`                      | field answer forgot-password |
 
 **Lý do:** mỗi chờ đợi trên **post-condition thật** (option render, dialog xuất hiện, row hiện) chứ không phải delay cố định — đây là thuốc giải flaky đúng cho async UI. `expect.poll` bọc một HTTP read async, retry tới expect timeout (10s) để hấp thụ **eventual consistency** giữa click và backend write. Vì zod parse mọi response, một contract change throw ngay tại read site với thông báo đọc được.
 
@@ -510,12 +529,12 @@ Framework **không có hard wait/sleep**. Readiness dùng web-first primitive:
 
 **Bốn tag** (khai báo inline `{ tag: [...] }`, orthogonal, kết hợp được):
 
-| Tag | Ý nghĩa | Số lượng (verified) |
-|---|---|---|
-| `@smoke` | Subset store-hoạt-động cơ bản — chạy mỗi push | **12** |
-| `@regression` | Mọi test = full nightly suite | **47** |
-| `@api` | Contract test tầng HTTP | **20** |
-| `@security` | Probe lỗ hổng OWASP có tài liệu | **3** |
+| Tag           | Ý nghĩa                                       | Số lượng (verified) |
+| ------------- | --------------------------------------------- | ------------------- |
+| `@smoke`      | Subset store-hoạt-động cơ bản — chạy mỗi push | **12**              |
+| `@regression` | Mọi test = full nightly suite                 | **47**              |
+| `@api`        | Contract test tầng HTTP                       | **20**              |
+| `@security`   | Probe lỗ hổng OWASP có tài liệu               | **3**               |
 
 CI slice bằng `--grep`: per-push chạy 12-test smoke gate; nightly chạy 47-test regression; cả hai từ **cùng** config. Browser matrix là **projects** (chromium/firefox/webkit) — trục độc lập với tag: `@smoke` trên chromium mỗi push, full regression cả ba engine nightly.
 
@@ -529,6 +548,7 @@ CI slice bằng `--grep`: per-push chạy 12-test smoke gate; nightly chạy 47-
 ## 13. Nguyên tắc thiết kế then chốt + Q&A phỏng vấn
 
 **Nguyên tắc then chốt:**
+
 1. **Single source of truth env-driven** — `baseURL`/`isCI` từ `process.env` ở cả `playwright.config.ts` lẫn `src/utils/env.ts`; đổi target = một env var, zero code change.
 2. **Parallel-safe by construction** — per-test throwaway user + factory, không shared state, không cleanup.
 3. **API-first setup** — register/login qua HTTP, nhanh & ổn định; UI login chỉ test ở spec riêng.
@@ -549,28 +569,28 @@ CI slice bằng `--grep`: per-push chạy 12-test smoke gate; nightly chạy 47-
 
 ## 14. Bảng tra nhanh: tầng -> file -> vai trò
 
-| Tầng | File | Vai trò |
-|---|---|---|
-| Startup | `docker-compose.yml` | Service `juice-shop` pin v17.1.1, port 3000, `NODE_ENV=unsafe`, distroless healthcheck via `/nodejs/bin/node` |
-| Startup | `scripts/wait-for-app.mjs` | Poll `/rest/admin/application-version` tới 200 hoặc 120s |
-| Config | `playwright.config.ts` | baseURL, projects, `fullyParallel`, workers cap, retries, timeouts, reporters, trace/screenshot/video, `testIdAttribute` |
-| Config | `src/utils/env.ts` | Single source of truth `baseURL` + `isCI` |
-| Config | `package.json` | Scripts: `app:up/down/wait`, `test`, `test:*`, `report`, `codegen` |
-| Fixture | `src/fixtures/test-data.fixture.ts` | Layer 1: override `page` (dismiss cookies) + `user`/`address`/`card` |
-| Fixture | `src/fixtures/auth.fixture.ts` | Layer 2: API client, `session` (createAndLogin), `loggedInPage` (storageState injection) |
-| Fixture | `src/fixtures/index.ts` | Re-export `test`/`expect` — một import surface |
-| API | `src/api/base.api.ts` | Bọc APIRequestContext, `setToken`/`headers`, httpGet/Post/Put/Delete |
-| API | `src/api/auth.api.ts` | `register` (Users + SecurityAnswers), `login` (raw), `createAndLogin` (parsed) |
-| API | `src/api/product.api.ts` | `listRaw/list`, `searchRaw/search`, `getById`, `first` |
-| API | `src/api/basket.api.ts` | `getRaw/get`, `addItemRaw`, `removeItemRaw`, `quantityOf`, `lineCount` |
-| API | `src/api/schemas.ts` | zod schema = contract + `z.infer` type source |
-| POM | `src/pages/base.page.ts` | Abstract: `open()`, `dismissOverlays()`, `snackbar` |
-| POM | `src/pages/navbar.component.ts` | Component object toolbar (compose vào page) |
-| POM | `src/pages/product-details.component.ts` | Component object modal `mat-dialog-container` |
-| POM | `src/pages/{login,register,home,basket,forgot-password}.page.ts` | Page object (extends BasePage, có `goto()`) |
-| Data | `src/data/constants.ts` | `ROUTES`, `STORAGE`, `DISMISS_COOKIES`, `SECURITY_QUESTION`, `KNOWN_PRODUCTS`, `ENDPOINTS` |
-| Data | `src/data/types.ts` | `TestUser`, `Address`, `PaymentCard` |
-| Data | `src/data/factories/{user,address,card}.factory.ts` | faker factory unique per-test |
-| Data | `src/utils/currency.ts` | `parsePrice`, `roundMoney`, `calcTotal` |
-| Tests | `tests/ui/`, `tests/api/`, `tests/security/` | Spec thật: UI + API contract + security probe |
-| Docs | `docs/test-strategy.md`, `docs/test-cases.md` | Chiến lược risk-based + ma trận truy vết requirement->spec->tag |
+| Tầng    | File                                                             | Vai trò                                                                                                                  |
+| ------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Startup | `docker-compose.yml`                                             | Service `juice-shop` pin v17.1.1, port 3000, `NODE_ENV=unsafe`, distroless healthcheck via `/nodejs/bin/node`            |
+| Startup | `scripts/wait-for-app.mjs`                                       | Poll `/rest/admin/application-version` tới 200 hoặc 120s                                                                 |
+| Config  | `playwright.config.ts`                                           | baseURL, projects, `fullyParallel`, workers cap, retries, timeouts, reporters, trace/screenshot/video, `testIdAttribute` |
+| Config  | `src/utils/env.ts`                                               | Single source of truth `baseURL` + `isCI`                                                                                |
+| Config  | `package.json`                                                   | Scripts: `app:up/down/wait`, `test`, `test:*`, `report`, `codegen`                                                       |
+| Fixture | `src/fixtures/test-data.fixture.ts`                              | Layer 1: override `page` (dismiss cookies) + `user`/`address`/`card`                                                     |
+| Fixture | `src/fixtures/auth.fixture.ts`                                   | Layer 2: API client, `session` (createAndLogin), `loggedInPage` (storageState injection)                                 |
+| Fixture | `src/fixtures/index.ts`                                          | Re-export `test`/`expect` — một import surface                                                                           |
+| API     | `src/api/base.api.ts`                                            | Bọc APIRequestContext, `setToken`/`headers`, httpGet/Post/Put/Delete                                                     |
+| API     | `src/api/auth.api.ts`                                            | `register` (Users + SecurityAnswers), `login` (raw), `createAndLogin` (parsed)                                           |
+| API     | `src/api/product.api.ts`                                         | `listRaw/list`, `searchRaw/search`, `getById`, `first`                                                                   |
+| API     | `src/api/basket.api.ts`                                          | `getRaw/get`, `addItemRaw`, `removeItemRaw`, `quantityOf`, `lineCount`                                                   |
+| API     | `src/api/schemas.ts`                                             | zod schema = contract + `z.infer` type source                                                                            |
+| POM     | `src/pages/base.page.ts`                                         | Abstract: `open()`, `dismissOverlays()`, `snackbar`                                                                      |
+| POM     | `src/pages/navbar.component.ts`                                  | Component object toolbar (compose vào page)                                                                              |
+| POM     | `src/pages/product-details.component.ts`                         | Component object modal `mat-dialog-container`                                                                            |
+| POM     | `src/pages/{login,register,home,basket,forgot-password}.page.ts` | Page object (extends BasePage, có `goto()`)                                                                              |
+| Data    | `src/data/constants.ts`                                          | `ROUTES`, `STORAGE`, `DISMISS_COOKIES`, `SECURITY_QUESTION`, `KNOWN_PRODUCTS`, `ENDPOINTS`                               |
+| Data    | `src/data/types.ts`                                              | `TestUser`, `Address`, `PaymentCard`                                                                                     |
+| Data    | `src/data/factories/{user,address,card}.factory.ts`              | faker factory unique per-test                                                                                            |
+| Data    | `src/utils/currency.ts`                                          | `parsePrice`, `roundMoney`, `calcTotal`                                                                                  |
+| Tests   | `tests/ui/`, `tests/api/`, `tests/security/`                     | Spec thật: UI + API contract + security probe                                                                            |
+| Docs    | `docs/test-strategy.md`, `docs/test-cases.md`                    | Chiến lược risk-based + ma trận truy vết requirement->spec->tag                                                          |

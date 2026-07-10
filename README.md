@@ -1,12 +1,20 @@
 # Juice Shop E2E — Playwright + TypeScript
 
-End-to-end test automation framework for a **real dockerized e-commerce app**
-([OWASP Juice Shop](https://github.com/juice-shop/juice-shop)), covering the core
-customer journey across **UI and API** with the Page Object Model, API-first
-setup, faker-based data factories, and schema-validated contract tests.
+<!-- Replace OWNER with your GitHub account once pushed. -->
 
-> **47 tests · fully parallel · ~14s wall-clock · 0 hard waits.**
-> Tagged `@smoke` / `@regression` / `@api` / `@security` for CI selection.
+[![smoke](https://github.com/OWNER/juice-shop-e2e-playwright/actions/workflows/smoke.yml/badge.svg)](https://github.com/OWNER/juice-shop-e2e-playwright/actions/workflows/smoke.yml)
+[![nightly-regression](https://github.com/OWNER/juice-shop-e2e-playwright/actions/workflows/nightly-regression.yml/badge.svg)](https://github.com/OWNER/juice-shop-e2e-playwright/actions/workflows/nightly-regression.yml)
+
+End-to-end test automation framework for a **real dockerized e-commerce app**
+([OWASP Juice Shop](https://github.com/juice-shop/juice-shop)), covering the full
+customer journey across **UI and API** — from registration through a completed
+purchase — with the Page Object Model, API-first setup, faker-based data
+factories, and schema-validated contract tests.
+
+> **52 tests · 3 browser engines (156 runs) · fully parallel · 0 hard waits.**
+> Tagged `@smoke` (14) / `@regression` (52) / `@api` / `@security` for CI selection.
+> **Smoke on every push** (chromium) + **nightly cross-browser regression** with an
+> **[Allure trend report](https://OWNER.github.io/juice-shop-e2e-playwright/)** published to GitHub Pages.
 
 ---
 
@@ -23,13 +31,13 @@ It exercises the same skills a QA/QC automation role needs on day one:
 
 ## Tech stack
 
-| Concern | Choice |
-|---|---|
-| Runner / framework | Playwright Test + TypeScript |
-| Test data | `@faker-js/faker` |
-| Schema validation | `zod` |
-| App under test | OWASP Juice Shop `v17.1.1` (Docker, pinned) |
-| Quality gates | ESLint (flat config) + Prettier + `tsc --noEmit` |
+| Concern            | Choice                                           |
+| ------------------ | ------------------------------------------------ |
+| Runner / framework | Playwright Test + TypeScript                     |
+| Test data          | `@faker-js/faker`                                |
+| Schema validation  | `zod`                                            |
+| App under test     | OWASP Juice Shop `v17.1.1` (Docker, pinned)      |
+| Quality gates      | ESLint (flat config) + Prettier + `tsc --noEmit` |
 
 ## Architecture
 
@@ -66,9 +74,11 @@ src/
 ├── fixtures/    # test-data + auth (storageState) fixtures, merged in index.ts
 ├── data/        # constants + faker factories (user, address, card)
 └── utils/       # env, currency parsing, logger
+src/pages/checkout/  # address, delivery, payment, order-summary, confirmation
 tests/
-├── ui/          # auth, catalog, basket UI suites
+├── ui/          # auth, catalog, basket, checkout UI suites
 ├── api/         # auth, products, basket contract suites
+├── e2e/         # full purchase journey (register → pay), UI-driven
 └── security/    # documented SQLi / IDOR smoke tests
 docs/            # test-strategy · exploratory-notes · test-cases (traceability)
 ```
@@ -95,13 +105,26 @@ Tear down the app with `npm run app:down`.
 ## Running subsets
 
 ```bash
-npm run test:smoke        # @smoke — the "is the store working?" subset (12)
-npm run test:regression   # full regression (47)
+npm run test:smoke        # @smoke — the "is the store working?" subset (14)
+npm run test:regression   # full regression (52)
 npm run test:api          # API contract suites
 npm run test:ui           # UI suites only
+npm run test:chromium     # single engine (fast dev loop)
+npm run test:firefox      # or :webkit — cross-browser
 npx playwright test --grep @security   # documented vulnerability tests
-npm run report            # open the last HTML report
+npm run report            # open the last Playwright HTML report
 ```
+
+> Tip: run `npm run app:reset` before a big local cross-browser run — Juice Shop
+> product stock is finite and depletes across many order-placing runs (a fresh
+> container re-seeds full stock; CI always starts fresh).
+
+## Reports
+
+- **Playwright HTML** — generated every run; `npm run report`.
+- **Allure** (trend/history) — `npm run allure:serve` (needs a JRE). The nightly
+  workflow publishes it to GitHub Pages:
+  `https://OWNER.github.io/juice-shop-e2e-playwright/`.
 
 ## Quality gates
 
@@ -113,13 +136,17 @@ npm run format:check
 
 ## Patterns worth a look
 
-| Pattern | Where |
-|---|---|
-| API-first auth + `storageState` injection | [`src/fixtures/auth.fixture.ts`](src/fixtures/auth.fixture.ts) |
-| Page Object Model | [`src/pages/basket.page.ts`](src/pages/basket.page.ts) |
-| UI action → API verify | [`tests/ui/basket/basket.spec.ts`](tests/ui/basket/basket.spec.ts) |
-| Schema (contract) validation | [`src/api/schemas.ts`](src/api/schemas.ts) |
-| Data factories | [`src/data/factories/`](src/data/factories/) |
+| Pattern                                   | Where                                                                                  |
+| ----------------------------------------- | -------------------------------------------------------------------------------------- |
+| API-first auth + `storageState` injection | [`src/fixtures/auth.fixture.ts`](src/fixtures/auth.fixture.ts)                         |
+| Page Object Model                         | [`src/pages/basket.page.ts`](src/pages/basket.page.ts)                                 |
+| UI action → API verify                    | [`tests/ui/basket/basket.spec.ts`](tests/ui/basket/basket.spec.ts)                     |
+| Full E2E purchase journey                 | [`tests/e2e/purchase-journey.spec.ts`](tests/e2e/purchase-journey.spec.ts)             |
+| Multi-step checkout POM                   | [`src/pages/checkout/`](src/pages/checkout/)                                           |
+| Schema (contract) validation              | [`src/api/schemas.ts`](src/api/schemas.ts)                                             |
+| Data factories                            | [`src/data/factories/`](src/data/factories/)                                           |
+| CI (smoke on push)                        | [`.github/workflows/smoke.yml`](.github/workflows/smoke.yml)                           |
+| CI (nightly cross-browser + Allure)       | [`.github/workflows/nightly-regression.yml`](.github/workflows/nightly-regression.yml) |
 
 ## Documentation
 
@@ -130,13 +157,13 @@ npm run format:check
 ## Roadmap
 
 - [x] **Weeks 1–3:** framework, POM + fixtures + API clients, auth/catalog/basket UI + API suites, tagging, docs.
-- [ ] **Week 4:** checkout (address/delivery/payment) + full purchase-journey E2E; GitHub Actions smoke pipeline.
-- [ ] **Week 5:** Allure reporting, nightly cross-browser regression, report published to GitHub Pages.
+- [x] **Week 4:** checkout (address/delivery/payment) POM + suite, full purchase-journey E2E, GitHub Actions smoke pipeline.
+- [x] **Week 5:** Allure reporting, nightly cross-browser regression (chromium/firefox/webkit), report published to GitHub Pages.
 - [ ] **Week 6:** README polish (GIF demo), sample bug reports, expanded `@security` layer.
 
 ---
 
-*OWASP Juice Shop is intentionally insecure software for security training. The
+_OWASP Juice Shop is intentionally insecure software for security training. The
 `@security` tests here document its known vulnerabilities for educational
 purposes against a locally-run instance — they are not an attack on any
-third-party system.*
+third-party system._

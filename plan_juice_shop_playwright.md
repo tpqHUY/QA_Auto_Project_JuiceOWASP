@@ -131,17 +131,17 @@ Juice Shop là app cố tình có lỗ hổng → viết 3–5 test "security sm
 - [x] Basket/Products API tests; pattern "UI action → API verify state" (dùng xuyên suốt basket suite)
 - **Milestone:** ✅ **47 tests** (vượt ~35), tagging `@smoke`/`@regression`/`@api`/`@security` hoàn chỉnh; full suite ~14s.
 
-### Tuần 4 — Checkout + E2E + CI
-- [ ] Checkout pages (address/delivery/payment) + tests
-- [ ] E2E purchase journey
-- [ ] GitHub Actions: workflow smoke (push/PR) — dựng Juice Shop bằng Docker trong CI, chạy suite @smoke
-- **Milestone:** CI xanh trên GitHub, badge trong README.
+### Tuần 4 — Checkout + E2E + CI ✅
+- [x] Checkout pages (address/delivery/payment/order-summary/confirmation) + tests (4 test, UI + API verify)
+- [x] E2E purchase journey (register → shop → checkout → pay, full UI, verify qua API)
+- [x] GitHub Actions: workflow smoke (push/PR) — dựng Juice Shop bằng Docker trong CI, chạy suite @smoke (14 test)
+- **Milestone:** ✅ CI workflow `smoke.yml` sẵn sàng + badge trong README; **52 test** tổng, smoke 14 test ~15s. (Badge sẽ xanh sau khi push lên GitHub.)
 
-### Tuần 5 — Reporting + độ ổn định
-- [ ] Allure Report tích hợp; nightly regression workflow (cron) + publish report lên GitHub Pages
-- [ ] Trace/screenshot/video on failure; retry strategy; xử lý flaky nếu có
-- [ ] Chạy đa trình duyệt (chromium/firefox/webkit projects)
-- **Milestone:** link report public — interviewer bấm vào xem được.
+### Tuần 5 — Reporting + độ ổn định ✅
+- [x] Allure Report tích hợp (reporter + `allure:generate/open/serve`); nightly regression workflow (cron `0 18 * * *`) + publish report lên GitHub Pages (giữ trend history)
+- [x] Trace/screenshot/video on failure; retry strategy (2 CI / 1 local); xử lý flaky (fix race menu Firefox, stock depletion → fresh container / `app:reset`)
+- [x] Chạy đa trình duyệt (chromium/firefox/webkit projects) — **156/156 xanh** (~1.6 phút)
+- **Milestone:** ✅ Allure report tự publish lên GitHub Pages qua nightly (`https://OWNER.github.io/juice-shop-e2e-playwright/`); badge nightly trong README. (Public sau khi push lên GitHub + bật Pages.)
 
 ### Tuần 6 — Polish & "bán hàng"
 - [ ] README hoàn chỉnh: sơ đồ kiến trúc (mermaid), badge, GIF demo, hướng dẫn chạy 1 lệnh

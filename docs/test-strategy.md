@@ -2,7 +2,7 @@
 
 > Living document. Covers scope, approach, risk-based prioritisation, and the
 > design decisions behind the framework. Written to be defensible in an
-> interview: every choice has a stated *why*.
+> interview: every choice has a stated _why_.
 
 ## 1. Objective
 
@@ -13,13 +13,13 @@ layers, wired into CI.
 
 ## 2. System under test
 
-| Aspect | Detail |
-|---|---|
-| Application | OWASP Juice Shop `v17.1.1` (pinned) |
-| Front end | Angular SPA (hash routing, `/#/...`), Angular Material |
-| Back end | Express/Node REST API (`/api/*`, `/rest/*`) |
-| Persistence | SQLite embedded in the container |
-| Deployment | Single Docker container (`bkimminich/juice-shop`) |
+| Aspect      | Detail                                                 |
+| ----------- | ------------------------------------------------------ |
+| Application | OWASP Juice Shop `v17.1.1` (pinned)                    |
+| Front end   | Angular SPA (hash routing, `/#/...`), Angular Material |
+| Back end    | Express/Node REST API (`/api/*`, `/rest/*`)            |
+| Persistence | SQLite embedded in the container                       |
+| Deployment  | Single Docker container (`bkimminich/juice-shop`)      |
 
 Because the DB is embedded and not reachable from outside the container, the
 **verification layer is API-level state checking** rather than direct SQL
@@ -31,18 +31,19 @@ demonstrated throughout the basket suite (the "UI action → API verify" pattern
 
 ### In scope (automated)
 
-| Module | Coverage | Priority |
-|---|---|---|
-| Authentication | register, login (+negatives), logout, password recovery | P1 |
-| Basket | add/increase/decrease/remove, total calculation, persistence | P1 |
-| Catalog & Search | listing, pagination, search (hit/miss), product detail | P2 |
-| API contracts | auth, products, basket — status + schema + authorization | P1 |
-| Security smoke | SQLi login bypass, IDOR basket access (documented) | P3 |
+| Module           | Coverage                                                                     | Priority |
+| ---------------- | ---------------------------------------------------------------------------- | -------- |
+| Authentication   | register, login (+negatives), logout, password recovery                      | P1       |
+| Basket           | add/increase/decrease/remove, total calculation, persistence                 | P1       |
+| Checkout         | add/select address, delivery choice, payment, place order + order verify     | P1       |
+| E2E journey      | register → shop → checkout → pay, UI-driven, API-verified                    | P1       |
+| Catalog & Search | listing, pagination, search (hit/miss), product detail                       | P2       |
+| API contracts    | auth, products, basket, address/card/order — status + schema + authorization | P1       |
+| Security smoke   | SQLi login bypass, IDOR basket access (documented)                           | P3       |
 
 ### Out of scope (and why)
 
-- **Checkout / delivery / payment E2E** — planned for the next iteration (week 4);
-  the page objects are structured to slot it in.
+- **Coupons / wallet / loyalty points** — secondary to the core purchase path.
 - **Visual regression, performance, load** — different tooling, different goal.
 - **Third-party/2FA/OAuth flows** — not part of the core journey being showcased.
 - **Direct DB assertions** — not possible (embedded SQLite); replaced by API checks.
@@ -51,16 +52,16 @@ demonstrated throughout the basket suite (the "UI action → API verify" pattern
 
 Effort follows business risk × likelihood of regression:
 
-| Risk | Impact | Coverage response |
-|---|---|---|
-| A user cannot log in / register | Revenue-blocking | P1, tagged `@smoke`, runs on every push |
-| Basket total is wrong | Direct financial / trust impact | Dedicated price-calculation tests, data-driven from live prices |
-| Unauthorized basket/data access | Security / compliance | Authorization negatives (401) + documented IDOR |
-| Search returns wrong/no results | Conversion impact | Hit and miss cases |
-| Cosmetic/layout | Low | Not automated at E2E level |
+| Risk                            | Impact                          | Coverage response                                               |
+| ------------------------------- | ------------------------------- | --------------------------------------------------------------- |
+| A user cannot log in / register | Revenue-blocking                | P1, tagged `@smoke`, runs on every push                         |
+| Basket total is wrong           | Direct financial / trust impact | Dedicated price-calculation tests, data-driven from live prices |
+| Unauthorized basket/data access | Security / compliance           | Authorization negatives (401) + documented IDOR                 |
+| Search returns wrong/no results | Conversion impact               | Hit and miss cases                                              |
+| Cosmetic/layout                 | Low                             | Not automated at E2E level                                      |
 
-`@smoke` = the "is the store fundamentally working?" subset (12 tests); the full
-`@regression` set (47) runs nightly.
+`@smoke` = the "is the store fundamentally working?" subset (14 tests, chromium,
+per push); the full `@regression` set (52) runs nightly across all three browsers.
 
 ## 5. Test approach & design principles
 
@@ -104,29 +105,45 @@ Effort follows business risk × likelihood of regression:
 
 ## 7. Environments & execution
 
-| Env | Base URL | Notes |
-|---|---|---|
-| Local | `http://localhost:3000` | `docker compose up -d` |
-| CI | `http://localhost:3000` | container started inside the workflow |
+| Env   | Base URL                | Notes                                 |
+| ----- | ----------------------- | ------------------------------------- |
+| Local | `http://localhost:3000` | `docker compose up -d`                |
+| CI    | `http://localhost:3000` | container started inside the workflow |
 
 - Parallelism: `fullyParallel`, worker cap tuned to the single-container backend.
-- Full suite wall-clock: **~14s** on a developer laptop (47 tests, 4 workers).
+- Full suite wall-clock: **~15s** chromium (52 tests); **~1.6 min** cross-browser
+  (156 runs across chromium/firefox/webkit).
+- Browser matrix is expressed as Playwright **projects** — the same config serves
+  `@smoke` on chromium (per push) and full regression on all three (nightly).
+- **CI:** `smoke.yml` runs `@smoke` on chromium on every push/PR;
+  `nightly-regression.yml` runs the full `@regression` suite across all three
+  engines on a cron, generating an **Allure trend report** (history preserved)
+  published to **GitHub Pages**.
+- **Reporting:** Playwright HTML every run; Allure (`allure-playwright` → `allure`
+  CLI, needs a JRE) for the public trend report. Failure diagnostics:
+  `trace: on-first-retry`, `screenshot`/`video` on failure.
 
 ## 8. Risks to the framework itself & mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Upstream Juice Shop release breaks selectors/behaviour | Docker image **pinned** to `v17.1.1`; bump deliberately + re-run regression |
-| Single container overwhelmed under high parallelism | Worker cap in `playwright.config.ts` (diagnosed via a full-run flake) |
-| Intentional Juice Shop vulnerabilities look like "failures" | `@security` tests assert *current* behaviour and document the secure expectation |
-| Flaky third-party network | API-first setup keeps tests self-contained against the local instance |
+| Risk                                                                            | Mitigation                                                                                                                                  |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Upstream Juice Shop release breaks selectors/behaviour                          | Docker image **pinned** to `v17.1.1`; bump deliberately + re-run regression                                                                 |
+| Single container overwhelmed under high parallelism                             | Worker cap in `playwright.config.ts` (diagnosed via a full-run flake)                                                                       |
+| Intentional Juice Shop vulnerabilities look like "failures"                     | `@security` tests assert _current_ behaviour and document the secure expectation                                                            |
+| Flaky third-party network                                                       | API-first setup keeps tests self-contained against the local instance                                                                       |
+| Finite product stock depletes over many order-placing runs (`400 out of stock`) | Regression runs on a **fresh container** (CI always fresh; locally `npm run app:reset`); order tests stay under Juice Shop's `limitPerUser` |
+| Cross-browser timing races (menu/redirect on Firefox/WebKit)                    | Web-first waits + retry-until-open helpers (`openAccountMenu`); verified green on all three engines                                         |
 
-## 9. Definition of Done (this phase — weeks 1–3)
+## 9. Definition of Done (weeks 1–5)
 
 - [x] Framework scaffolding, Docker, CI-ready config
 - [x] POM + fixtures + API client + data factories
-- [x] Auth, catalog/search, basket UI suites
+- [x] Auth, catalog/search, basket, **checkout** UI suites
 - [x] Auth/products/basket API suites with schema validation
+- [x] **Full purchase-journey E2E** (UI-driven, API-verified)
 - [x] `@smoke`/`@regression`/`@api`/`@security` tagging
-- [x] 47 tests passing, stable, parallel, < 1 min
-- [ ] Checkout E2E + CI pipeline + published report (weeks 4–5)
+- [x] **GitHub Actions smoke pipeline** on push/PR
+- [x] **Cross-browser** green (chromium/firefox/webkit — 156 runs)
+- [x] **Allure trend report** + **nightly cross-browser regression** published to GitHub Pages
+- [x] 52 tests passing, stable, parallel, < 1 min (chromium)
+- [ ] README GIF demo + sample bug reports + expanded `@security` layer (week 6)

@@ -15,6 +15,13 @@ export const ROUTES = {
   basket: '/#/basket',
   forgotPassword: '/#/forgot-password',
   contact: '/#/contact',
+  // Checkout flow (in order)
+  addressSelect: '/#/address/select',
+  addressCreate: '/#/address/create',
+  deliveryMethod: '/#/delivery-method',
+  payment: '/#/payment/shop',
+  orderSummary: '/#/order-summary',
+  orderHistory: '/#/order-history',
 } as const;
 
 /** Keys the Angular app uses to persist session state (confirmed via probe). */
@@ -62,4 +69,18 @@ export const ENDPOINTS = {
   basketItems: '/api/BasketItems',
   basketItem: (id: number | string) => `/api/BasketItems/${id}`,
   applicationVersion: '/rest/admin/application-version',
+  // Checkout (note Juice Shop's Sequelize-pluralised names: Addresss, Deliverys)
+  addresses: '/api/Addresss',
+  cards: '/api/Cards',
+  deliveries: '/api/Deliverys',
+  checkout: (bid: number | string) => `/rest/basket/${bid}/checkout`,
+  orderHistory: '/rest/order-history',
+  trackOrder: (orderId: string) => `/rest/track-order/${orderId}`,
 } as const;
+
+/**
+ * Juice Shop's Card model rejects any `expYear` below ~2080 (a Sequelize `min`
+ * validator — confirmed via probe: 2027 → 400, 2080 → 201). Card test data must
+ * use a year in the accepted range or the API refuses to create it.
+ */
+export const MIN_CARD_EXP_YEAR = 2080;

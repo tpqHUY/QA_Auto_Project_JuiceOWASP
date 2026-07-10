@@ -31,3 +31,8 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+gh-pages/
+
+# Claude Code local files
+.claude/settings.local.json
+.claude/*.lock

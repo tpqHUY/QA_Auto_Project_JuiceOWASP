@@ -76,3 +76,70 @@ export const BasketItemResponseSchema = z.object({
     quantity: z.number(),
   }),
 });
+
+// ---- Checkout ----
+
+export const AddressResponseSchema = z.object({
+  status: z.literal('success'),
+  data: z.object({
+    id: z.number(),
+    fullName: z.string(),
+    mobileNum: z.number(),
+    zipCode: z.string(),
+    streetAddress: z.string(),
+    city: z.string(),
+    country: z.string(),
+  }),
+});
+
+export const CardResponseSchema = z.object({
+  status: z.literal('success'),
+  data: z.object({
+    id: z.number(),
+    fullName: z.string(),
+    // Juice Shop returns the card number as a number in the response body.
+    cardNum: z.union([z.number(), z.string()]),
+    expMonth: z.number(),
+    expYear: z.number(),
+  }),
+});
+
+export const DeliveryMethodSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  price: z.number(),
+  eta: z.number(),
+});
+export type DeliveryMethod = z.infer<typeof DeliveryMethodSchema>;
+
+export const DeliveryListResponseSchema = z.object({
+  status: z.literal('success'),
+  data: z.array(DeliveryMethodSchema).min(1),
+});
+
+export const CheckoutResponseSchema = z.object({
+  orderConfirmation: z.string().min(1),
+});
+
+/** Shape shared by /rest/track-order and /rest/order-history rows. */
+export const OrderSchema = z.object({
+  orderId: z.string(),
+  totalPrice: z.number(),
+  deliveryPrice: z.number(),
+  eta: z.union([z.number(), z.string()]),
+  products: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      price: z.number(),
+      quantity: z.number(),
+      total: z.number(),
+    })
+  ),
+});
+export type Order = z.infer<typeof OrderSchema>;
+
+export const OrderListResponseSchema = z.object({
+  status: z.literal('success'),
+  data: z.array(OrderSchema),
+});

@@ -22,16 +22,16 @@ regression and auto-published Allure reports.
 
 ## Highlights (metrics that matter)
 
-| Metric | Value |
-|---|---|
-| Automated test cases | **70+** (UI + API + security) |
-| Execution | Fully parallel, **< 10 min** full regression |
-| Hard waits (`sleep`) | **0** — Playwright auto-waiting / web-first assertions only |
-| Browsers | Chromium · Firefox · WebKit (nightly matrix) |
-| Contract tests | Every API response validated against a **`zod` schema** |
-| CI | Smoke on every push/PR · nightly cross-browser regression |
-| Reporting | Playwright HTML + **Allure**, published to GitHub Pages |
-| Test data | 100% dynamic (faker factories) — **no hardcoded data**, parallel-safe |
+| Metric               | Value                                                                 |
+| -------------------- | --------------------------------------------------------------------- |
+| Automated test cases | **70+** (UI + API + security)                                         |
+| Execution            | Fully parallel, **< 10 min** full regression                          |
+| Hard waits (`sleep`) | **0** — Playwright auto-waiting / web-first assertions only           |
+| Browsers             | Chromium · Firefox · WebKit (nightly matrix)                          |
+| Contract tests       | Every API response validated against a **`zod` schema**               |
+| CI                   | Smoke on every push/PR · nightly cross-browser regression             |
+| Reporting            | Playwright HTML + **Allure**, published to GitHub Pages               |
+| Test data            | 100% dynamic (faker factories) — **no hardcoded data**, parallel-safe |
 
 ---
 
@@ -52,9 +52,9 @@ regression and auto-published Allure reports.
 These are the "why" answers that hold up in an interview:
 
 - **Layered architecture** — Page Objects + component objects + typed API clients + composable Playwright fixtures. Tests read like business specs, not selector soup.
-- **API-first setup (`storageState`)** — authenticate over HTTP and inject the session token/basket-id into browser storage, so UI tests start *where the actual test begins* instead of re-driving the login form every time. Faster and far less flaky.
+- **API-first setup (`storageState`)** — authenticate over HTTP and inject the session token/basket-id into browser storage, so UI tests start _where the actual test begins_ instead of re-driving the login form every time. Faster and far less flaky.
 - **UI action → API verify** — drive the browser, then read the REST API to prove the backend state agrees. The modern stand-in for a DB check on an API-driven SPA (Juice Shop uses an embedded SQLite that can't be inspected externally).
-- **Contract testing with `zod`** — assert response *shape*, not just `200 OK`, catching backend contract drift.
+- **Contract testing with `zod`** — assert response _shape_, not just `200 OK`, catching backend contract drift.
 - **Parallel-safe by construction** — every test generates its own user/address/card via faker factories → zero shared state → safe to fan out.
 - **Tag-driven CI** — `@smoke` / `@regression` / `@api` / `@security` let the pipeline pick the right subset per trigger.
 
@@ -62,15 +62,15 @@ These are the "why" answers that hold up in an interview:
 
 ## Tech stack
 
-| Concern | Choice |
-|---|---|
-| Runner / language | Playwright Test + TypeScript |
-| Test data | `@faker-js/faker` |
-| Schema validation | `zod` |
-| App under test | OWASP Juice Shop `v17.1.1` (Docker, pinned) |
-| CI/CD | GitHub Actions (smoke + nightly regression) |
-| Reporting | Playwright HTML + Allure → GitHub Pages |
-| Quality gates | ESLint (flat config) + Prettier + `tsc --noEmit` |
+| Concern           | Choice                                           |
+| ----------------- | ------------------------------------------------ |
+| Runner / language | Playwright Test + TypeScript                     |
+| Test data         | `@faker-js/faker`                                |
+| Schema validation | `zod`                                            |
+| App under test    | OWASP Juice Shop `v17.1.1` (Docker, pinned)      |
+| CI/CD             | GitHub Actions (smoke + nightly regression)      |
+| Reporting         | Playwright HTML + Allure → GitHub Pages          |
+| Quality gates     | ESLint (flat config) + Prettier + `tsc --noEmit` |
 
 ---
 
@@ -96,13 +96,13 @@ These are the "why" answers that hold up in an interview:
 
 ## Interview talking points (STAR-ready)
 
-- *"Why fixtures instead of `beforeEach`?"* — composable dependency chain, lazy per-test data, no shared mutable state.
-- *"How do you handle flaky tests?"* — auto-waiting only (no `sleep`), per-test isolated data, trace-on-retry for debugging.
-- *"Why log in via API?"* — speed + isolation; UI login is tested explicitly in *one* place, not paid for in every spec.
-- *"How do you verify without DB access?"* — API-level state check after UI actions.
+- _"Why fixtures instead of `beforeEach`?"_ — composable dependency chain, lazy per-test data, no shared mutable state.
+- _"How do you handle flaky tests?"_ — auto-waiting only (no `sleep`), per-test isolated data, trace-on-retry for debugging.
+- _"Why log in via API?"_ — speed + isolation; UI login is tested explicitly in _one_ place, not paid for in every spec.
+- _"How do you verify without DB access?"_ — API-level state check after UI actions.
 
 ---
 
-*OWASP Juice Shop is intentionally insecure software built for security training.
+_OWASP Juice Shop is intentionally insecure software built for security training.
 The `@security` tests here document its known vulnerabilities for educational
-purposes against a locally-run instance — not an attack on any third-party system.*
+purposes against a locally-run instance — not an attack on any third-party system._

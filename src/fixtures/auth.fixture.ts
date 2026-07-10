@@ -2,6 +2,9 @@ import { test as dataTest } from './test-data.fixture.js';
 import { AuthApi, type AuthSession } from '../api/auth.api.js';
 import { ProductApi } from '../api/product.api.js';
 import { BasketApi } from '../api/basket.api.js';
+import { AddressApi } from '../api/address.api.js';
+import { CardApi } from '../api/card.api.js';
+import { OrderApi } from '../api/order.api.js';
 import { DISMISS_COOKIES, STORAGE } from '../data/constants.js';
 import { env } from '../utils/env.js';
 import type { Page } from '@playwright/test';
@@ -23,6 +26,9 @@ export type AuthFixtures = {
   authApi: AuthApi;
   productApi: ProductApi;
   basketApi: BasketApi;
+  addressApi: AddressApi;
+  cardApi: CardApi;
+  orderApi: OrderApi;
   session: AuthSession;
   loggedInPage: Page;
 };
@@ -38,6 +44,18 @@ export const test = dataTest.extend<AuthFixtures>({
 
   basketApi: async ({ request }, use) => {
     await use(new BasketApi(request));
+  },
+
+  addressApi: async ({ request }, use) => {
+    await use(new AddressApi(request));
+  },
+
+  cardApi: async ({ request }, use) => {
+    await use(new CardApi(request));
+  },
+
+  orderApi: async ({ request }, use) => {
+    await use(new OrderApi(request));
   },
 
   // Register + log in a fresh user over the API. Fast, deterministic setup.

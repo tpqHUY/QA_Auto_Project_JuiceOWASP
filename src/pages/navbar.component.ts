@@ -24,7 +24,20 @@ export class NavbarComponent {
   }
 
   async openAccountMenu(): Promise<void> {
-    await this.accountButton.click();
+    // The menu can fail to open if clicked while a post-login redirect is still
+    // settling (seen on Firefox), so retry until a menu item is actually shown.
+    const anyItem = this.page.locator('#navbarLoginButton, #navbarLogoutButton').first();
+    if (await anyItem.isVisible().catch(() => false)) return;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await this.accountButton.click();
+      try {
+        await anyItem.waitFor({ state: 'visible', timeout: 2000 });
+        return;
+      } catch {
+        // menu didn't open (or a navigation closed it) — retry
+      }
+    }
+    await anyItem.waitFor({ state: 'visible' });
   }
 
   async goToLogin(): Promise<void> {

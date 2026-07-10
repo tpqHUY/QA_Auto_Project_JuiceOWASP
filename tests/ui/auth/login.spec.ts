@@ -64,7 +64,7 @@ test.describe('Login (UI)', () => {
     { tag: ['@smoke', '@regression'] },
     async ({ loggedInPage }) => {
       const navbar = new NavbarComponent(loggedInPage);
-      await loggedInPage.goto(ROUTES.home);
+      await loggedInPage.goto(ROUTES.home, { waitUntil: 'domcontentloaded' });
 
       await navbar.logout();
 
