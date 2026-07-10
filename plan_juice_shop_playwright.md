@@ -141,7 +141,7 @@ Juice Shop là app cố tình có lỗ hổng → viết 3–5 test "security sm
 - [x] Allure Report tích hợp (reporter + `allure:generate/open/serve`); nightly regression workflow (cron `0 18 * * *`) + publish report lên GitHub Pages (giữ trend history)
 - [x] Trace/screenshot/video on failure; retry strategy (2 CI / 1 local); xử lý flaky (fix race menu Firefox, stock depletion → fresh container / `app:reset`)
 - [x] Chạy đa trình duyệt (chromium/firefox/webkit projects) — **156/156 xanh** (~1.6 phút)
-- **Milestone:** ✅ Allure report tự publish lên GitHub Pages qua nightly (`https://OWNER.github.io/juice-shop-e2e-playwright/`); badge nightly trong README. (Public sau khi push lên GitHub + bật Pages.)
+- **Milestone:** ✅ Allure report tự publish lên GitHub Pages qua nightly (`https://tpqhuy.github.io/QA_Auto_Project_JuiceOWASP/`); badge nightly trong README. (Public sau khi push lên GitHub + bật Pages.)
 
 ### Tuần 6 — Polish & "bán hàng"
 - [ ] README hoàn chỉnh: sơ đồ kiến trúc (mermaid), badge, GIF demo, hướng dẫn chạy 1 lệnh

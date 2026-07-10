@@ -1,25 +1,31 @@
 name: nightly-regression
 
 # Full @regression suite across all three browser engines every night, with an
-# Allure trend report published to GitHub Pages. Smoke (chromium only) runs
-# per-push in smoke.yml; this is the deep, cross-browser safety net.
+# Allure trend report deployed to GitHub Pages via the official Pages action
+# (Settings → Pages → Source: "GitHub Actions"). Smoke (chromium) runs per-push
+# in smoke.yml; this is the deep, cross-browser safety net.
 on:
   schedule:
     - cron: '0 18 * * *' # 18:00 UTC ≈ 01:00 Vietnam time
   workflow_dispatch:
 
-# Never let two nightly runs publish the report at once.
-concurrency:
-  group: nightly-regression
-  cancel-in-progress: false
-
+# Permissions required by the official GitHub Pages deployment.
 permissions:
-  contents: write # required to push the report to the gh-pages branch
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two Pages deployments run at once.
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   regression:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    outputs:
+      result: ${{ steps.regression.outcome }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,6 +60,16 @@ jobs:
       - name: Wait for Juice Shop to be ready
         run: npm run app:wait
 
+      # Carry Allure trend history across runs (unique key each run, restore the
+      # most recent) so the report shows pass/fail trends over time.
+      - name: Restore Allure history
+        uses: actions/cache@v4
+        with:
+          path: allure-history-store
+          key: allure-history-${{ github.run_id }}
+          restore-keys: |
+            allure-history-
+
       # Fresh container ⇒ full product stock, so cross-browser ordering tests
       # never hit Juice Shop's finite stock (see docs/exploratory-notes.md).
       - name: Run @regression across all browsers
@@ -65,32 +81,23 @@ jobs:
         if: always()
         run: docker compose down
 
-      # --- Publish Allure report to GitHub Pages (with trend history) ---
-      - name: Fetch previous report for history
-        if: always()
-        uses: actions/checkout@v4
-        continue-on-error: true
-        with:
-          ref: gh-pages
-          path: gh-pages
-
       - name: Generate Allure report (preserving trend history)
         if: always()
         run: |
-          if [ -d gh-pages/history ]; then
-            cp -r gh-pages/history allure-results/history
+          if [ -d allure-history-store ]; then
+            cp -r allure-history-store allure-results/history
           fi
           npx allure generate allure-results --clean -o allure-report
+          rm -rf allure-history-store
+          cp -r allure-report/history allure-history-store
 
-      - name: Publish report to GitHub Pages
+      - name: Upload report as the Pages artifact
         if: always()
-        uses: peaceiris/actions-gh-pages@v4
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./allure-report
-          publish_branch: gh-pages
+          path: allure-report
 
-      - name: Upload raw reports as artifacts
+      - name: Upload raw reports as build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -100,9 +107,28 @@ jobs:
             playwright-report/
           retention-days: 14
 
-      # Make the job red if any test failed (report is already published above).
-      - name: Fail job if regression failed
-        if: steps.regression.outcome == 'failure'
+  # Deploy the Allure report to GitHub Pages (always — a failing run is still
+  # inspectable at the public URL).
+  deploy:
+    needs: regression
+    if: always()
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Make the overall run red if any test failed (report is already deployed).
+  status:
+    needs: regression
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if regression failed
+        if: needs.regression.outputs.result == 'failure'
         run: |
           echo "Regression suite had failures — see the published Allure report."
           exit 1

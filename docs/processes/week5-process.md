@@ -183,7 +183,7 @@ curl ... -X POST /api/BasketItems -d '{"ProductId":1,"BasketId":"...","quantity"
 
 ## 5. Bước 4 — Đọc `nightly-regression.yml` dòng-by-dòng
 
-Đây là deliverable "link report public". Chạy theo lịch, cả 3 engine, xuất Allure lên GitHub Pages.
+Đây là deliverable "link report public". Chạy theo lịch, cả 3 engine, deploy Allure lên GitHub Pages bằng **cơ chế Pages chính thức** (`actions/deploy-pages`) — khớp với Settings → Pages → Source = **"GitHub Actions"**. **Không cần nhánh `gh-pages`.**
 
 ```yaml
 on:
@@ -191,73 +191,69 @@ on:
     - cron: '0 18 * * *' # 18:00 UTC ≈ 01:00 giờ VN
   workflow_dispatch: # cho phép bấm chạy tay
 
-concurrency:
-  group: nightly-regression # không cho 2 lần nightly publish đè nhau
-  cancel-in-progress: false
+permissions: # quyền cho official Pages deployment
+  contents: read
+  pages: write
+  id-token: write
 
-permissions:
-  contents: write # CẦN, để push report lên nhánh gh-pages
+concurrency:
+  group: pages # không cho 2 lần deploy Pages đè nhau
+  cancel-in-progress: false
 ```
 
-Các bước trong job (theo thứ tự, kèm _vì sao_):
+Workflow chia **3 job**: `regression` (chạy test + build report), `deploy` (đẩy lên Pages), `status` (báo đỏ nếu test fail).
+
+**Job `regression`** (theo thứ tự, kèm _vì sao_):
 
 1. `checkout` → `setup-node@v4` (Node 20, cache npm).
 2. **`setup-java@v4` (temurin 21)** — vì `allure generate` cần JRE. _(Đây là lý do bước này không có ở smoke.yml.)_
 3. `npm ci` → cache browser Playwright (key băm `package-lock.json`).
 4. `playwright install --with-deps chromium firefox webkit` — **cả 3** engine (smoke chỉ cài chromium).
 5. `docker compose up -d` → `npm run app:wait`. **Container fresh ⇒ stock đầy** → tránh đúng cái bẫy hết hàng ở Bước 3.
-6. **Chạy test — nhưng `continue-on-error: true`:**
+6. **Restore trend history từ cache** (giải thích ở dưới).
+7. **Chạy test — `continue-on-error: true`** (không fail job ngay để còn deploy report):
 
 ```yaml
 - name: Run @regression across all browsers
   id: regression
   run: npx playwright test --grep @regression
-  continue-on-error: true # KHÔNG fail job ngay -> để còn publish report
+  continue-on-error: true
 ```
 
-7. `docker compose down` (`if: always()`) — luôn dọn.
-8. **Giữ trend history rồi generate Allure:**
+8. `docker compose down` (`if: always()`) — luôn dọn.
+9. **Generate Allure (bơm history cũ vào, rồi lưu history mới lại):**
 
 ```yaml
-- name: Fetch previous report for history
-  if: always()
-  uses: actions/checkout@v4
-  continue-on-error: true
-  with: { ref: gh-pages, path: gh-pages } # lấy report cũ
-
 - name: Generate Allure report (preserving trend history)
   if: always()
   run: |
-    if [ -d gh-pages/history ]; then
-      cp -r gh-pages/history allure-results/history   # bơm history cũ vào -> có biểu đồ xu hướng
+    if [ -d allure-history-store ]; then
+      cp -r allure-history-store allure-results/history   # history cũ -> có trend
     fi
     npx allure generate allure-results --clean -o allure-report
+    rm -rf allure-history-store
+    cp -r allure-report/history allure-history-store        # lưu history mới cho lần sau
 ```
 
-9. **Publish lên GitHub Pages** (nhánh `gh-pages`):
+10. **Upload report làm Pages artifact** (không phải push nhánh):
 
 ```yaml
-- name: Publish report to GitHub Pages
+- name: Upload report as the Pages artifact
   if: always()
-  uses: peaceiris/actions-gh-pages@v4
+  uses: actions/upload-pages-artifact@v3
   with:
-    github_token: ${{ secrets.GITHUB_TOKEN }}
-    publish_dir: ./allure-report
-    publish_branch: gh-pages
+    path: allure-report
 ```
 
-10. Upload `allure-report/` + `playwright-report/` làm artifact (`if: always()`, giữ 14 ngày).
-11. **Fail job ở cuối nếu test đỏ:**
+11. Upload `allure-report/` + `playwright-report/` làm build artifact (`if: always()`, giữ 14 ngày).
 
-```yaml
-- name: Fail job if regression failed
-  if: steps.regression.outcome == 'failure'
-  run: exit 1
-```
+**Job `deploy`** — `needs: regression`, `if: always()`, chạy `actions/deploy-pages@v4` với `environment: github-pages`. Đây là bước đưa report công khai lên `https://tpqhuy.github.io/QA_Auto_Project_JuiceOWASP/`.
 
-**Vì sao pattern "continue-on-error → publish → fail cuối"?** Vì ta muốn report **luôn được publish** kể cả khi có test đỏ (để đi xem lỗi trên report công khai), nhưng job vẫn phải **đỏ** để báo hiệu có vấn đề. Nếu để test fail job ngay, các bước publish (đứng sau) sẽ bị bỏ qua.
+**Job `status`** — `needs: regression`, `if: always()`, chỉ `exit 1` khi `needs.regression.outputs.result == 'failure'`.
 
-**Vì sao giữ `history`?** Allure vẽ biểu đồ xu hướng dựa trên thư mục `history`. Report publish nằm ở gốc `gh-pages`, nên history của lần trước ở `gh-pages/history`; copy nó vào `allure-results/history` **trước khi** generate thì report mới có trend qua nhiều đêm.
+**Vì sao tách 3 job + `continue-on-error`?** Ta muốn report **luôn được deploy** kể cả khi có test đỏ (để đi xem lỗi trên report công khai), nhưng overall run vẫn phải **đỏ** để báo hiệu. Job `regression` giữ "xanh" (test dùng `continue-on-error`) để artifact được upload và cache history được lưu; job `deploy` chạy bất kể; còn việc báo đỏ đẩy sang job `status` riêng.
+
+**Vì sao giữ `history` bằng cache (không phải nhánh gh-pages)?** Allure vẽ biểu đồ xu hướng từ thư mục `history`. Với cơ chế Pages chính thức không có nhánh `gh-pages` để lấy report cũ, nên ta dùng `actions/cache`: key duy nhất mỗi lần chạy (`allure-history-${{ github.run_id }}`) + `restore-keys: allure-history-` để phục hồi bản gần nhất; copy vào `allure-results/history` **trước khi** generate → report có trend qua nhiều đêm.
 
 ---
 
@@ -287,7 +283,7 @@ Tuần 5 không phải bắt đầu từ đầu về ổn định — nền đã
 5. Tại sao 8 test "đỏ trên WebKit" **không** phải bug WebKit? Làm sao biết? _(hết hàng; tái hiện bằng curl, đọc body `"out of stock"`)_
 6. Vì sao regression phải chạy trên container **fresh**? _(stock hữu hạn, đặt hàng làm giảm; fresh = re-seed đầy)_
 7. Giải thích pattern `continue-on-error` → publish → `exit 1` cuối job. _(publish report kể cả khi đỏ, nhưng job vẫn báo đỏ)_
-8. Trend history của Allure được giữ bằng cách nào giữa các đêm? _(copy `gh-pages/history` vào `allure-results/history` trước khi generate)_
+8. Trend history của Allure được giữ bằng cách nào giữa các đêm? _(dùng `actions/cache` phục hồi `history` bản gần nhất, copy vào `allure-results/history` trước khi generate)_
 
 ---
 
@@ -323,8 +319,8 @@ npm run allure:serve       # xem Allure report cục bộ (cần Java)
 
 ### Khi push lên GitHub
 
-- Thay `OWNER` trong badge + link report ở README.
-- Bật **GitHub Pages** (source: nhánh `gh-pages`) → nightly tự đẩy Allure lên `https://OWNER.github.io/juice-shop-e2e-playwright/`.
+- Bật **GitHub Pages**: Settings → Pages → Source = **"GitHub Actions"** (không cần nhánh `gh-pages` — workflow dùng `actions/deploy-pages`).
+- Chạy workflow `nightly-regression` (tab Actions → Run workflow) hoặc chờ cron → Allure tự deploy lên `https://tpqhuy.github.io/QA_Auto_Project_JuiceOWASP/`.
 
 ### 4 bài học cốt lõi
 

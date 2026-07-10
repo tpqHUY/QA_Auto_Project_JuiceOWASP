@@ -1,9 +1,9 @@
 # Juice Shop E2E — Playwright + TypeScript
 
-<!-- Replace OWNER with your GitHub account once pushed. -->
+<!-- GitHub Pages: Settings → Pages → Source "GitHub Actions"; the nightly workflow deploys the Allure report. -->
 
-[![smoke](https://github.com/OWNER/juice-shop-e2e-playwright/actions/workflows/smoke.yml/badge.svg)](https://github.com/OWNER/juice-shop-e2e-playwright/actions/workflows/smoke.yml)
-[![nightly-regression](https://github.com/OWNER/juice-shop-e2e-playwright/actions/workflows/nightly-regression.yml/badge.svg)](https://github.com/OWNER/juice-shop-e2e-playwright/actions/workflows/nightly-regression.yml)
+[![smoke](https://github.com/tpqHUY/QA_Auto_Project_JuiceOWASP/actions/workflows/smoke.yml/badge.svg)](https://github.com/tpqHUY/QA_Auto_Project_JuiceOWASP/actions/workflows/smoke.yml)
+[![nightly-regression](https://github.com/tpqHUY/QA_Auto_Project_JuiceOWASP/actions/workflows/nightly-regression.yml/badge.svg)](https://github.com/tpqHUY/QA_Auto_Project_JuiceOWASP/actions/workflows/nightly-regression.yml)
 
 End-to-end test automation framework for a **real dockerized e-commerce app**
 ([OWASP Juice Shop](https://github.com/juice-shop/juice-shop)), covering the full
@@ -14,7 +14,7 @@ factories, and schema-validated contract tests.
 > **52 tests · 3 browser engines (156 runs) · fully parallel · 0 hard waits.**
 > Tagged `@smoke` (14) / `@regression` (52) / `@api` / `@security` for CI selection.
 > **Smoke on every push** (chromium) + **nightly cross-browser regression** with an
-> **[Allure trend report](https://OWNER.github.io/juice-shop-e2e-playwright/)** published to GitHub Pages.
+> **[Allure trend report](https://tpqhuy.github.io/QA_Auto_Project_JuiceOWASP/)** published to GitHub Pages.
 
 ---
 
@@ -124,7 +124,7 @@ npm run report            # open the last Playwright HTML report
 - **Playwright HTML** — generated every run; `npm run report`.
 - **Allure** (trend/history) — `npm run allure:serve` (needs a JRE). The nightly
   workflow publishes it to GitHub Pages:
-  `https://OWNER.github.io/juice-shop-e2e-playwright/`.
+  `https://tpqhuy.github.io/QA_Auto_Project_JuiceOWASP/`.
 
 ## Quality gates
 
