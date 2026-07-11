@@ -20,13 +20,12 @@ factories, and schema-validated contract tests.
 
 ## Demo
 
-The full purchase journey — catalog → basket → checkout → order confirmation —
-driven end-to-end through the UI and verified via the API
+The full purchase journey — catalog → add to basket → checkout (address →
+delivery → payment) → order confirmation — driven end-to-end through the UI and
+verified via the API
 ([`tests/e2e/purchase-journey.spec.ts`](tests/e2e/purchase-journey.spec.ts)):
 
-| Catalog                                | Order confirmed (API-verified)                               |
-| -------------------------------------- | ------------------------------------------------------------ |
-| ![Catalog](docs/assets/01-catalog.png) | ![Order confirmation](docs/assets/04-order-confirmation.png) |
+![Purchase journey demo](docs/assets/demo.gif)
 
 ## Why this project
 
