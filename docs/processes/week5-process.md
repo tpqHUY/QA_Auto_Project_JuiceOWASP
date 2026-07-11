@@ -183,7 +183,7 @@ curl ... -X POST /api/BasketItems -d '{"ProductId":1,"BasketId":"...","quantity"
 
 ## 5. Bước 4 — Đọc `nightly-regression.yml` dòng-by-dòng
 
-> 📘 Phần `docker compose up -d` + `wait-for-app` trong CI được giải thích kỹ ở [docs/setup/docker.md](../setup/docker.md) (mục "Docker trong CI").
+> 📘 Nền tảng CI/GitHub Actions (khái niệm, recipe tái dùng): [docs/setup/ci.md](../setup/ci.md). Phần `docker compose up -d` + `wait-for-app`: [docs/setup/docker.md](../setup/docker.md).
 
 Đây là deliverable "link report public". Chạy theo lịch, cả 3 engine, deploy Allure lên GitHub Pages bằng **cơ chế Pages chính thức** (`actions/deploy-pages`) — khớp với Settings → Pages → Source = **"GitHub Actions"**. **Không cần nhánh `gh-pages`.**
 

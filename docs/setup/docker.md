@@ -122,6 +122,8 @@ npm run app:down    # dọn dẹp
 
 ## 5. Docker trong CI (GitHub Actions) — điểm ăn tiền
 
+> 🔗 Toàn bộ về CI (workflow/job/step, 2 pipeline của project, công thức tái dùng): [docs/setup/ci.md](./ci.md).
+
 Runner CI là một **máy Ubuntu trống** trên cloud. Nhờ Docker, nó tự dựng được app y hệt máy bạn — chỉ vài dòng trong workflow:
 
 ```yaml

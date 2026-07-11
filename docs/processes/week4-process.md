@@ -442,6 +442,8 @@ Phần này dạy **phương pháp debug**: lỗi đến từ đâu, cách truy 
 
 ## 9. Bước 7 — CI smoke.yml
 
+> 📘 Chưa quen CI/GitHub Actions? Đọc kèm [docs/setup/ci.md](../setup/ci.md) — khái niệm, giải mã từng step, và công thức tái dùng cho project khác.
+
 **Làm gì:** thêm `.github/workflows/smoke.yml`, chạy trên push (`main`/`master`), mọi PR, và `workflow_dispatch`.
 
 **Vì sao smoke, không phải full:** feedback nhanh mỗi push; full regression đa trình duyệt để dành nightly (Tuần 5).
