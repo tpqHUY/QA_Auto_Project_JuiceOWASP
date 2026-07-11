@@ -157,10 +157,11 @@ npm run format:check
 
 ## Possible extensions
 
-- Profile management (change password / profile) coverage.
-- Visual-regression and accessibility (axe) checks.
-- Performance smoke (API latency budgets) wired into CI.
-- Broader security suite (CSRF, JWT tampering, more injection points).
+- Accessibility (axe) + visual-regression checks.
+- Deeper security suite (JWT tampering, security headers) + `npm audit` / CodeQL / ZAP in CI.
+- Profile-management coverage, test sharding, and performance-latency budgets.
+
+📄 Full, prioritised roadmap (value vs effort): **[docs/roadmap.md](docs/roadmap.md)**.
 
 ---
 

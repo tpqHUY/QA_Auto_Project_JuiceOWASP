@@ -8,6 +8,9 @@ where applicable, links to the automated test that covers it.
 > findings (BUG-003/004/005) are reported here as a QA exercise; they are
 > confirmed against a locally-run instance, not any third-party system.
 
+> 📘 Muốn hiểu cách các test bảo mật này hoạt động & cách viết thêm (defensive):
+> [docs/setup/security-testing.md](../setup/security-testing.md).
+
 | ID                                                       | Title                                                  | Type       | Severity | Priority | Automated |
 | -------------------------------------------------------- | ------------------------------------------------------ | ---------- | -------- | -------- | --------- |
 | [BUG-001](BUG-001-registration-drops-security-answer.md) | Registration API silently discards the security answer | Functional | High     | P2       | ✅        |
