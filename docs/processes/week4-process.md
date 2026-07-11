@@ -59,6 +59,8 @@ Ví dụ: test "đặt hàng thành công" không đi đăng ký/đăng nhập/t
 
 ## 2. Bước 0 — Chuẩn bị môi trường
 
+> 📘 Chi tiết Docker (image/container, compose, healthcheck, lệnh, sự cố): [docs/setup/docker.md](../setup/docker.md).
+
 **Làm gì:** Docker Desktop đã tắt (phiên mới) → bật lại → `docker compose up -d` dựng Juice Shop → `npm run app:wait` chờ app sẵn sàng.
 
 **Vì sao:** `docker compose up -d` trả về ngay khi container _đã lên_, nhưng SPA cần thêm thời gian mới _phục vụ được request_. Bắt đầu probe/test ngay lúc đó sẽ gặp race "container up ≠ app ready". `scripts/wait-for-app.mjs` poll `GET /rest/admin/application-version` mỗi 3s tới khi nhận `200` (timeout 120s).

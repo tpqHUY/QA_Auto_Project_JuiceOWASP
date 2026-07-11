@@ -66,6 +66,8 @@ flowchart TD
 
 ## 3. Bước 2 — Docker hoá Juice Shop (điểm then chốt của tuần 1)
 
+> 📘 Chưa quen Docker? Đọc kèm [docs/setup/docker.md](../setup/docker.md) — giải thích image/container, từng dòng `docker-compose.yml`, healthcheck, lệnh, và xử lý sự cố cho người mới.
+
 **Làm gì:** dựng Juice Shop bằng Docker để chạy được **offline và trong CI**, không phụ thuộc site public.
 
 **`docker-compose.yml`:**
