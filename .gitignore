@@ -37,5 +37,6 @@ gh-pages/
 .claude/settings.local.json
 .claude/*.lock
 
-# Personal planning notes (kept local, not part of the portfolio repo)
+# Personal notes (kept local, not part of the portfolio repo)
 plan_juice_shop_playwright.md
+PORTFOLIO.md
