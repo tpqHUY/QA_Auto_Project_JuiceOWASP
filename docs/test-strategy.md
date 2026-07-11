@@ -134,16 +134,16 @@ per push); the full `@regression` set (52) runs nightly across all three browser
 | Finite product stock depletes over many order-placing runs (`400 out of stock`) | Regression runs on a **fresh container** (CI always fresh; locally `npm run app:reset`); order tests stay under Juice Shop's `limitPerUser` |
 | Cross-browser timing races (menu/redirect on Firefox/WebKit)                    | Web-first waits + retry-until-open helpers (`openAccountMenu`); verified green on all three engines                                         |
 
-## 9. Definition of Done (weeks 1–5)
+## 9. Definition of Done
 
 - [x] Framework scaffolding, Docker, CI-ready config
 - [x] POM + fixtures + API client + data factories
-- [x] Auth, catalog/search, basket, **checkout** UI suites
-- [x] Auth/products/basket API suites with schema validation
-- [x] **Full purchase-journey E2E** (UI-driven, API-verified)
+- [x] Auth, catalog/search, basket, checkout UI suites
+- [x] Auth/products/basket/order API suites with schema validation
+- [x] Full purchase-journey E2E (UI-driven, API-verified)
 - [x] `@smoke`/`@regression`/`@api`/`@security` tagging
-- [x] **GitHub Actions smoke pipeline** on push/PR
-- [x] **Cross-browser** green (chromium/firefox/webkit — 156 runs)
-- [x] **Allure trend report** + **nightly cross-browser regression** published to GitHub Pages
-- [x] 52 tests passing, stable, parallel, < 1 min (chromium)
-- [ ] README GIF demo + sample bug reports + expanded `@security` layer (week 6)
+- [x] GitHub Actions smoke pipeline on push/PR
+- [x] Cross-browser green (chromium/firefox/webkit — 162 runs)
+- [x] Allure trend report + nightly cross-browser regression on GitHub Pages
+- [x] 54 tests passing, stable, parallel (~15 s chromium)
+- [x] Docs: strategy, traceability matrix, exploratory notes, JIRA-style bug reports

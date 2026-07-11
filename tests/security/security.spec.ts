@@ -62,4 +62,30 @@ test.describe('Security smoke @security', () => {
       expect(res.status()).toBe(200);
     }
   );
+
+  test(
+    'DOM XSS: the search query is rendered without sanitisation',
+    { tag: ['@security', '@regression'] },
+    async ({ page }) => {
+      const payload = '<iframe src="javascript:alert(`xss`)">';
+      await page.goto(`/#/search?q=${encodeURIComponent(payload)}`);
+
+      // FINDING: a secure app must escape the query. Juice Shop injects the raw
+      // markup, so a `javascript:` iframe lands in the DOM — DOM-based XSS.
+      await expect(page.locator('iframe[src^="javascript:"]')).toHaveCount(1);
+    }
+  );
+
+  test(
+    'sensitive files are exposed through the public /ftp directory',
+    { tag: ['@security', '@api', '@regression'] },
+    async ({ request }) => {
+      const res = await request.get('/ftp');
+
+      // FINDING: this internal directory should not be publicly listed. Juice
+      // Shop serves a browsable listing including backup files (*.bak).
+      expect(res.status()).toBe(200);
+      expect(await res.text()).toContain('.bak');
+    }
+  );
 });

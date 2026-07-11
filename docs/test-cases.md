@@ -86,10 +86,14 @@ Legend for tags: 🔥 `@smoke` · 🔁 `@regression` (all) · 🔌 `@api` · �
 
 ## Security smoke (documented OWASP vulnerabilities)
 
-| ID        | Requirement (secure expectation) | Observed behaviour                          | Spec                              | Tags   |
-| --------- | -------------------------------- | ------------------------------------------- | --------------------------------- | ------ |
-| TC-SEC-01 | Login must resist SQL injection  | `' OR 1=1--` bypasses auth (API) → **200**  | `tests/security/security.spec.ts` | 🔁🔌🔐 |
-| TC-SEC-02 | Login form must resist SQLi      | Injection logs in via UI                    | `tests/security/security.spec.ts` | 🔁🔐   |
-| TC-SEC-03 | Basket access must be owner-only | IDOR: reads another user's basket → **200** | `tests/security/security.spec.ts` | 🔁🔌🔐 |
+| ID        | Requirement (secure expectation)  | Observed behaviour                                     | Spec                              | Tags   |
+| --------- | --------------------------------- | ------------------------------------------------------ | --------------------------------- | ------ |
+| TC-SEC-01 | Login must resist SQL injection   | `' OR 1=1--` bypasses auth (API) → **200**             | `tests/security/security.spec.ts` | 🔁🔌🔐 |
+| TC-SEC-02 | Login form must resist SQLi       | Injection logs in via UI                               | `tests/security/security.spec.ts` | 🔁🔐   |
+| TC-SEC-03 | Basket access must be owner-only  | IDOR: reads another user's basket → **200**            | `tests/security/security.spec.ts` | 🔁🔌🔐 |
+| TC-SEC-04 | Search input must be sanitised    | DOM XSS: `javascript:` iframe injected via query       | `tests/security/security.spec.ts` | 🔁🔐   |
+| TC-SEC-05 | Internal files must not be public | `/ftp` lists sensitive files (incl. `*.bak`) → **200** | `tests/security/security.spec.ts` | 🔁🔌🔐 |
 
-**Totals:** 52 automated tests — 14 🔥 smoke · 20 🔌 API · 3 🔐 security · 52 🔁 regression.
+Each security finding is cross-referenced to a JIRA-style report in [`docs/bug-reports/`](bug-reports/).
+
+**Totals:** 54 automated tests — 14 🔥 smoke · 21 🔌 API · 5 🔐 security · 54 🔁 regression (× 3 browsers = 162 runs).

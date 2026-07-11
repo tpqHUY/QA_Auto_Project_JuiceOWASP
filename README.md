@@ -11,12 +11,22 @@ customer journey across **UI and API** — from registration through a completed
 purchase — with the Page Object Model, API-first setup, faker-based data
 factories, and schema-validated contract tests.
 
-> **52 tests · 3 browser engines (156 runs) · fully parallel · 0 hard waits.**
-> Tagged `@smoke` (14) / `@regression` (52) / `@api` / `@security` for CI selection.
+> **54 tests · 3 browser engines (162 runs) · fully parallel · 0 hard waits.**
+> Tagged `@smoke` (14) / `@regression` (54) / `@api` (21) / `@security` (5) for CI selection.
 > **Smoke on every push** (chromium) + **nightly cross-browser regression** with an
 > **[Allure trend report](https://tpqhuy.github.io/QA_Auto_Project_JuiceOWASP/)** published to GitHub Pages.
 
 ---
+
+## Demo
+
+The full purchase journey — catalog → basket → checkout → order confirmation —
+driven end-to-end through the UI and verified via the API
+([`tests/e2e/purchase-journey.spec.ts`](tests/e2e/purchase-journey.spec.ts)):
+
+| Catalog                                | Order confirmed (API-verified)                               |
+| -------------------------------------- | ------------------------------------------------------------ |
+| ![Catalog](docs/assets/01-catalog.png) | ![Order confirmation](docs/assets/04-order-confirmation.png) |
 
 ## Why this project
 
@@ -41,23 +51,14 @@ It exercises the same skills a QA/QC automation role needs on day one:
 
 ## Architecture
 
-```
-                 ┌─────────────────────────────────────────────┐
-   Specs ───────▶│  Page Objects (UI)      API Clients (HTTP)   │
- (tests/**)      │  src/pages/*            src/api/*            │
-                 └───────────────┬─────────────────┬───────────┘
-                                 │                 │
-                         ┌───────▼─────────────────▼────────┐
-                         │  Fixtures (composable chain)      │
-                         │  page(+banners) → user/address/   │
-                         │  card → api clients → session →   │
-                         │  loggedInPage (token injection)   │
-                         └───────────────┬───────────────────┘
-                                         │
-                              ┌──────────▼──────────┐
-                              │  OWASP Juice Shop    │
-                              │  (Docker :3000)      │
-                              └──────────────────────┘
+```mermaid
+flowchart TD
+    Specs["Specs (tests/**)"] --> POM["Page Objects (src/pages/*)"]
+    Specs --> API["API Clients (src/api/*)"]
+    POM --> FX["Fixtures (composable chain)"]
+    API --> FX
+    FX --> Chain["page (+banner cookies) → user/address/card (factories)<br/>→ api clients → session → loggedInPage (token injection)"]
+    Chain --> App["OWASP Juice Shop (Docker :3000)"]
 ```
 
 The **fixture chain** is the backbone: a spec that declares `loggedInPage`
@@ -79,8 +80,8 @@ tests/
 ├── ui/          # auth, catalog, basket, checkout UI suites
 ├── api/         # auth, products, basket contract suites
 ├── e2e/         # full purchase journey (register → pay), UI-driven
-└── security/    # documented SQLi / IDOR smoke tests
-docs/            # test-strategy · exploratory-notes · test-cases (traceability)
+└── security/    # documented SQLi / IDOR / XSS / exposure tests
+docs/            # test-strategy · exploratory-notes · test-cases · bug-reports
 ```
 
 ## Quick start
@@ -106,7 +107,7 @@ Tear down the app with `npm run app:down`.
 
 ```bash
 npm run test:smoke        # @smoke — the "is the store working?" subset (14)
-npm run test:regression   # full regression (52)
+npm run test:regression   # full regression (54)
 npm run test:api          # API contract suites
 npm run test:ui           # UI suites only
 npm run test:chromium     # single engine (fast dev loop)
@@ -153,13 +154,14 @@ npm run format:check
 - [Test Strategy](docs/test-strategy.md) — scope, risk-based prioritisation, design decisions (interview Q&A).
 - [Exploratory Notes](docs/exploratory-notes.md) — ground-truth selectors, endpoints, and the app quirks the framework handles.
 - [Test Cases & Traceability](docs/test-cases.md) — requirement → test case → spec matrix.
+- [Bug Reports](docs/bug-reports/) — JIRA-style defect reports (severity/priority/steps/actual/expected) for issues found while testing.
 
-## Roadmap
+## Possible extensions
 
-- [x] **Weeks 1–3:** framework, POM + fixtures + API clients, auth/catalog/basket UI + API suites, tagging, docs.
-- [x] **Week 4:** checkout (address/delivery/payment) POM + suite, full purchase-journey E2E, GitHub Actions smoke pipeline.
-- [x] **Week 5:** Allure reporting, nightly cross-browser regression (chromium/firefox/webkit), report published to GitHub Pages.
-- [ ] **Week 6:** README polish (GIF demo), sample bug reports, expanded `@security` layer.
+- Profile management (change password / profile) coverage.
+- Visual-regression and accessibility (axe) checks.
+- Performance smoke (API latency budgets) wired into CI.
+- Broader security suite (CSRF, JWT tampering, more injection points).
 
 ---
 
