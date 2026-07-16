@@ -14,6 +14,7 @@ import { ROUTES } from '../../src/data/constants.js';
 test.describe('Visual regression @visual', () => {
   // Baselines are committed for chromium only — skip on other engines so the full
   // `npm test` run stays green. Generate per-engine baselines to enable them.
+  // eslint-disable-next-line playwright/no-skipped-test -- intentional: cross-OS/engine baselines not committed
   test.skip(({ browserName }) => browserName !== 'chromium', 'chromium-only baselines');
 
   test('login page matches baseline', { tag: ['@visual'] }, async ({ page }) => {

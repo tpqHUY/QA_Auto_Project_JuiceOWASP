@@ -1,0 +1,70 @@
+# Label definitions, synced to GitHub by .github/workflows/labels.yml (EndBug/label-sync).
+# Additive only (delete-other-labels: false) so GitHub defaults + Dependabot's own labels survive.
+
+# ── Type ──────────────────────────────────────────────────────────────────────
+- name: type/bug
+  color: d73a4a
+  description: A defect in the app under test or the framework
+- name: type/feature-test
+  color: 0e8a16
+  description: Automate coverage for a feature/flow
+- name: type/flaky
+  color: fbca04
+  description: Non-deterministic test — quarantine then root-cause
+- name: type/tech-debt
+  color: 5319e7
+  description: Refactor, dependency/version bump, CI upkeep
+- name: type/security
+  color: b60205
+  description: Security-related test or finding
+- name: type/docs
+  color: 0075ca
+  description: Documentation only
+
+# ── Priority ──────────────────────────────────────────────────────────────────
+- name: priority/P0
+  color: b60205
+  description: Fix now — blocks the pipeline or a core flow
+- name: priority/P1
+  color: d93f0b
+  description: This sprint
+- name: priority/P2
+  color: fbca04
+  description: Next sprint
+- name: priority/P3
+  color: 0e8a16
+  description: Backlog
+
+# ── Status ────────────────────────────────────────────────────────────────────
+- name: status/triage
+  color: ededed
+  description: Needs assessment / grooming
+- name: status/in-progress
+  color: 1d76db
+  description: Being worked on
+- name: status/blocked
+  color: '000000'
+  description: Waiting on something
+- name: status/needs-review
+  color: fbca04
+  description: PR open, awaiting review
+- name: status/quarantined
+  color: e99695
+  description: Flaky — excluded from the CI gate
+
+# ── Area ──────────────────────────────────────────────────────────────────────
+- name: area/ui
+  color: c5def5
+  description: UI / Page Object layer
+- name: area/api
+  color: c5def5
+  description: API client / contract layer
+- name: area/ci
+  color: c5def5
+  description: CI/CD, workflows, reporting
+- name: area/a11y
+  color: c5def5
+  description: Accessibility
+- name: area/performance
+  color: c5def5
+  description: Performance budgets

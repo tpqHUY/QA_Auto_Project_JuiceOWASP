@@ -78,8 +78,8 @@ jobs:
       - name: Wait for Juice Shop to be ready
         run: npm run app:wait
 
-      - name: Run @smoke suite (chromium)
-        run: npx playwright test --grep @smoke --project=chromium
+      - name: Run @smoke suite (chromium, excluding quarantined @flaky)
+        run: npx playwright test --grep @smoke --grep-invert @flaky --project=chromium
 
       - name: Tear down Juice Shop
         if: always()

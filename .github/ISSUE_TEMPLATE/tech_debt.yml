@@ -1,0 +1,38 @@
+name: '🧹 Tech debt / maintenance'
+description: Refactors, dependency/version bumps, CI upkeep, framework improvements.
+title: '[CHORE] <what>'
+labels: ['type/tech-debt', 'status/triage']
+body:
+  - type: input
+    id: what
+    attributes:
+      label: What
+      placeholder: Bump pinned Juice Shop image v17.1.1 → v17.x and fix breakage
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      placeholder: Keeps the app under test current; exercises the upgrade-guard flow.
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Dependency update (Dependabot)
+        - Juice Shop version bump (upgrade guard)
+        - Refactor / framework improvement
+        - CI / tooling
+        - Docs
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: ['P0 - Fix now', 'P1 - This sprint', 'P2 - Next sprint', 'P3 - Backlog']
+    validations:
+      required: true

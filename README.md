@@ -164,6 +164,7 @@ npm run format:check
 
 ## Documentation
 
+- [Ways of working](docs/workflow/README.md) — how the project is run like a real QA job: ticket → PR → CI → merge, sprints, [flaky policy](docs/workflow/flaky-policy.md), [metrics](docs/workflow/metrics.md), [backlog](docs/workflow/backlog.md).
 - [Test Strategy](docs/test-strategy.md) — scope, risk-based prioritisation, design decisions (interview Q&A).
 - [Exploratory Notes](docs/exploratory-notes.md) — ground-truth selectors, endpoints, and the app quirks the framework handles.
 - [Test Cases & Traceability](docs/test-cases.md) — requirement → test case → spec matrix.

@@ -1,0 +1,82 @@
+name: '🐞 Bug report'
+description: A defect found in the application under test (OWASP Juice Shop) or in the framework.
+title: '[BUG] <short summary>'
+labels: ['type/bug', 'status/triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report a defect the way you would on a real team: clear repro, evidence, and impact.
+        For app defects, also add a JIRA-style write-up under `docs/bug-reports/` and link it here.
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One sentence — what is wrong.
+      placeholder: Basket total is wrong when a coupon is applied.
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity (impact)
+      options:
+        - S1 - Critical (blocks core flow / data loss / security)
+        - S2 - Major (feature broken, has workaround)
+        - S3 - Minor (cosmetic / edge case)
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority (urgency)
+      options:
+        - P0 - Fix now
+        - P1 - This sprint
+        - P2 - Next sprint
+        - P3 - Backlog
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: App version, browser/engine, OS, commit SHA.
+      placeholder: Juice Shop v17.1.1 · chromium · Windows 11 · commit 25a1d1c
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered, deterministic steps.
+      placeholder: |
+        1. Log in as a fresh user
+        2. Add Apple Juice to basket
+        3. Apply coupon XYZ
+        4. Observe the total
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Screenshot / trace / API response / log. Drag files in.
+  - type: input
+    id: regression-test
+    attributes:
+      label: Regression test
+      description: Path to the test that locks this bug (add one before closing).
+      placeholder: tests/ui/basket/coupon.spec.ts

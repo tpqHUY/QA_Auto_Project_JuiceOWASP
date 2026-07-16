@@ -1,0 +1,64 @@
+name: '✨ Feature test task'
+description: Automate coverage for a feature (a new drop, or an existing untested flow).
+title: '[TEST] <feature> — <what to cover>'
+labels: ['type/feature-test', 'status/triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Treat this like a ticket handed over by a PM: turn a feature into test cases, then automate.
+        Follow the flow: requirements → test cases (`docs/test-cases.md`) → automate → tag → regression.
+  - type: input
+    id: feature
+    attributes:
+      label: Feature / flow
+      placeholder: Wallet — top up balance and pay with wallet
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Why now
+      options:
+        - Existing untested flow (coverage gap)
+        - New feature after a Juice Shop version bump
+        - Follow-up from a bug / exploratory session
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria (what "works" means)
+      placeholder: |
+        - A user can top up the wallet by a valid amount
+        - Wallet balance persists and is shown in the account
+        - Paying with wallet decrements the balance by the order total
+    validations:
+      required: true
+  - type: textarea
+    id: test-ideas
+    attributes:
+      label: Test ideas (happy path + negatives + boundaries)
+      placeholder: |
+        - Happy: top up 10, balance = 10
+        - Negative: top up 0 / negative / non-numeric → rejected
+        - Boundary: very large amount
+        - API verify: state via REST after the UI action
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: ['P0 - Fix now', 'P1 - This sprint', 'P2 - Next sprint', 'P3 - Backlog']
+    validations:
+      required: true
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Definition of Done
+      options:
+        - label: Test cases added to `docs/test-cases.md`
+        - label: Automated, tagged (`@regression` + type tag), parallel-safe, no hard waits
+        - label: Green locally (chromium) and on CI
+        - label: Traceability updated (requirement → test)

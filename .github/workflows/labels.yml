@@ -1,0 +1,27 @@
+name: labels
+
+# Sync repository labels from .github/labels.yml so the label set is version-controlled
+# (no manual clicking in the GitHub UI). Runs when the file changes or on demand.
+on:
+  push:
+    branches: [main, master]
+    paths: ['.github/labels.yml', '.github/workflows/labels.yml']
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync labels
+        uses: EndBug/label-sync@v2
+        with:
+          config-file: .github/labels.yml
+          # Additive: never delete labels not listed here (keeps GitHub defaults + Dependabot's).
+          delete-other-labels: false
+          token: ${{ secrets.GITHUB_TOKEN }}

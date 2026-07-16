@@ -60,8 +60,8 @@ jobs:
 
       # Fresh container ⇒ full product stock, so cross-browser ordering tests
       # never hit Juice Shop's finite stock (see docs/exploratory-notes.md).
-      - name: Run @regression (shard ${{ matrix.shard }}/3, all browsers)
-        run: npx playwright test --grep @regression --shard=${{ matrix.shard }}/3
+      - name: Run @regression (shard ${{ matrix.shard }}/3, all browsers, excl. quarantined @flaky)
+        run: npx playwright test --grep @regression --grep-invert @flaky --shard=${{ matrix.shard }}/3
 
       - name: Tear down Juice Shop
         if: always()
@@ -169,3 +169,46 @@ jobs:
         run: |
           echo "Regression suite had failures — see the published Allure report."
           exit 1
+
+  # ── Quarantined @flaky tests: run them, but NEVER gate the pipeline ───────────
+  # Keeps flaky tests exercised (so we can watch their stability + decide when to
+  # un-quarantine) without letting them turn the nightly red. No-op until a test
+  # is tagged @flaky.
+  flaky-watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install Playwright (all engines + OS deps)
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Start Juice Shop
+        run: docker compose up -d
+      - name: Wait for Juice Shop to be ready
+        run: npm run app:wait
+      # Extra retries to measure how flaky they still are. Exits 0 even on failure.
+      - name: Run quarantined @flaky tests (non-gating)
+        run: npx playwright test --grep @flaky --retries=3 || true
+      - name: Tear down Juice Shop
+        if: always()
+        run: docker compose down
+      - name: Upload flaky report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaky-report
+          path: playwright-report/
+          retention-days: 7

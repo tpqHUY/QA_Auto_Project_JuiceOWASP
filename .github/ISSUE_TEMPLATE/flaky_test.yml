@@ -1,0 +1,53 @@
+name: '🎲 Flaky test'
+description: A test that passes and fails non-deterministically. Quarantine, then root-cause.
+title: '[FLAKY] <test name>'
+labels: ['type/flaky', 'status/quarantined']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Follow the flaky policy (`docs/workflow/flaky-policy.md`): **quarantine first** (tag `@flaky`
+        so it stops gating CI), then find the root cause, fix, and un-quarantine.
+  - type: input
+    id: test
+    attributes:
+      label: Test (title + file)
+      placeholder: '"a registered user can log in" — tests/ui/auth/login.spec.ts'
+    validations:
+      required: true
+  - type: input
+    id: rate
+    attributes:
+      label: Observed failure rate
+      placeholder: ~2 in 10 runs on webkit
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error / symptom
+      description: Paste the assertion error or timeout, and a trace link if available.
+    validations:
+      required: true
+  - type: dropdown
+    id: cause
+    attributes:
+      label: Suspected root-cause category
+      options:
+        - Timing / missing web-first wait
+        - Shared state / data collision
+        - App load / finite stock
+        - Cross-browser rendering/timing
+        - Network / environment
+        - Unknown (needs investigation)
+    validations:
+      required: true
+  - type: checkboxes
+    id: steps
+    attributes:
+      label: Handling checklist
+      options:
+        - label: Tagged `@flaky` (quarantined out of the CI gate)
+        - label: Root cause identified
+        - label: Fixed at the source (not just more retries)
+        - label: Re-run 3× green, `@flaky` removed
