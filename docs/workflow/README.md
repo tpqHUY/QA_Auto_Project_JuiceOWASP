@@ -58,6 +58,9 @@ Settings → Branches → Add rule for `main`:
 - ✅ Require branches to be up to date before merging
 - ✅ (optional) Require conversation resolution
 
+> Full click-by-click setup for labels, the board, the backlog, and this rule:
+> [github-setup.md](github-setup.md).
+
 ## 4. Definition of Ready / Done
 
 **Ready** (before work starts): clear acceptance criteria, priority set, dependencies known.
