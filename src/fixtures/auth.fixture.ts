@@ -5,7 +5,8 @@ import { BasketApi } from '../api/basket.api.js';
 import { AddressApi } from '../api/address.api.js';
 import { CardApi } from '../api/card.api.js';
 import { OrderApi } from '../api/order.api.js';
-import { DISMISS_COOKIES, STORAGE } from '../data/constants.js';
+import { ReviewApi } from '../api/review.api.js';
+import { ADMIN, DISMISS_COOKIES, STORAGE } from '../data/constants.js';
 import { env } from '../utils/env.js';
 import type { Page } from '@playwright/test';
 
@@ -29,7 +30,10 @@ export type AuthFixtures = {
   addressApi: AddressApi;
   cardApi: CardApi;
   orderApi: OrderApi;
+  reviewApi: ReviewApi;
   session: AuthSession;
+  /** A session authenticated as the seeded administrator (role-based test data). */
+  adminSession: AuthSession;
   loggedInPage: Page;
 };
 
@@ -58,9 +62,22 @@ export const test = dataTest.extend<AuthFixtures>({
     await use(new OrderApi(request));
   },
 
+  reviewApi: async ({ request }, use) => {
+    await use(new ReviewApi(request));
+  },
+
   // Register + log in a fresh user over the API. Fast, deterministic setup.
   session: async ({ authApi, user }, use) => {
     const session = await authApi.createAndLogin(user);
+    await use(session);
+  },
+
+  // Log in as the seeded administrator. Uses its own AuthApi instance so it never
+  // clashes with the per-test `session` user's token. Unlocks admin-only flows and
+  // role-based authorization tests.
+  adminSession: async ({ request }, use) => {
+    const adminApi = new AuthApi(request);
+    const session = await adminApi.loginToSession(ADMIN.email, ADMIN.password);
     await use(session);
   },
 

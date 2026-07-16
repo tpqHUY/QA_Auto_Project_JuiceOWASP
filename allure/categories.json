@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Infrastructure & environment",
+    "matchedStatuses": ["broken", "failed"],
+    "messageRegex": ".*(ECONNREFUSED|ECONNRESET|ETIMEDOUT|net::ERR|getaddrinfo|Target page, context or browser has been closed).*"
+  },
+  {
+    "name": "Timeouts (possible flake)",
+    "matchedStatuses": ["broken", "failed"],
+    "messageRegex": ".*(Timeout .* exceeded|Test timeout of|exceeded while waiting).*"
+  },
+  {
+    "name": "Product defect (app under test)",
+    "matchedStatuses": ["failed"],
+    "messageRegex": ".*FINDING.*"
+  },
+  {
+    "name": "Test defect (assertion mismatch)",
+    "matchedStatuses": ["failed"],
+    "messageRegex": ".*(expect\\(|toBe|toEqual|toContain|toHaveText|toBeVisible|toHaveScreenshot).*"
+  },
+  {
+    "name": "Ignored / known issues",
+    "matchedStatuses": ["skipped"]
+  }
+]

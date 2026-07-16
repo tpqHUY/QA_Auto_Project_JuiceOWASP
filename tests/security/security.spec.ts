@@ -88,4 +88,36 @@ test.describe('Security smoke @security', () => {
       expect(await res.text()).toContain('.bak');
     }
   );
+
+  test(
+    'a tampered JWT is rejected on a protected endpoint',
+    { tag: ['@security', '@api', '@regression'] },
+    async ({ basketApi, session }) => {
+      // Corrupt the signature segment of an otherwise-valid token.
+      basketApi.setToken(session.token.slice(0, -4) + 'AAAA');
+      const res = await basketApi.getRaw(session.bid);
+
+      // Secure expectation — and Juice Shop honours it: a bad signature must be
+      // rejected. This is a defensive test (verifies auth is enforced), the
+      // inverse of the SQLi/IDOR "documented vulnerability" tests above.
+      expect([401, 403]).toContain(res.status());
+    }
+  );
+
+  test(
+    'key HTTP security headers are present on the app root',
+    { tag: ['@security', '@api', '@regression'] },
+    async ({ request }) => {
+      const headers = (await request.get('/')).headers();
+
+      // Present in Juice Shop — assert they stay present (anti MIME-sniffing / clickjacking):
+      expect(headers['x-content-type-options']).toBe('nosniff');
+      expect(headers['x-frame-options']).toBeDefined();
+
+      // FINDING: a hardened app should ALSO set these; Juice Shop does not.
+      // In a real app these would be assertions, not comments:
+      //   expect(headers['content-security-policy']).toBeDefined();
+      //   expect(headers['strict-transport-security']).toBeDefined();
+    }
+  );
 });

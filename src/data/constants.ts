@@ -22,6 +22,17 @@ export const ROUTES = {
   payment: '/#/payment/shop',
   orderSummary: '/#/order-summary',
   orderHistory: '/#/order-history',
+  changePassword: '/#/privacy-security/change-password',
+} as const;
+
+/**
+ * Juice Shop's default seeded administrator. Used by the admin-role fixture to
+ * exercise role-based flows. These are the app's well-known demo credentials, not
+ * a secret.
+ */
+export const ADMIN = {
+  email: 'admin@juice-sh.op',
+  password: 'admin123',
 } as const;
 
 /** Keys the Angular app uses to persist session state (confirmed via probe). */
@@ -65,6 +76,9 @@ export const ENDPOINTS = {
   securityAnswers: '/api/SecurityAnswers',
   products: '/api/Products',
   productSearch: '/rest/products/search',
+  productReviews: (productId: number | string) => `/rest/products/${productId}/reviews`,
+  changePassword: '/rest/user/change-password',
+  whoami: '/rest/user/whoami',
   basket: (id: number | string) => `/rest/basket/${id}`,
   basketItems: '/api/BasketItems',
   basketItem: (id: number | string) => `/api/BasketItems/${id}`,

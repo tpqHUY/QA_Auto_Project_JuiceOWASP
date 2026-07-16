@@ -1,9 +1,13 @@
 # Roadmap — Future Enhancements
 
-Ideas to grow the framework beyond its current state (54 tests · 3 browsers ·
-CI/CD · Allure · risk-based docs). This is **not a fixed timeline** — a menu of
-improvements grouped by theme, each with rough **value** and **effort**, so the
-next step can be picked by goal.
+Ideas to grow the framework beyond its current state (67 tests · 3 browsers ·
+a11y / performance / visual / unit · sharded CI/CD · Allure · risk-based docs).
+This is **not a fixed timeline** — a menu of improvements grouped by theme, each
+with rough **value** and **effort**, so the next step can be picked by goal.
+
+> ✅ **The seven recommended next steps below are now implemented** — plus product
+> reviews, an admin-role fixture, Dependabot, and pre-commit hooks. See the
+> step-by-step write-up in [roadmap-implementation.md](./roadmap-implementation.md).
 
 **Effort legend:** `S` ≤ ~half a day · `M` ~1–2 days · `L` ~3+ days.
 

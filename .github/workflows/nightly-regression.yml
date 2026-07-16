@@ -1,9 +1,10 @@
 name: nightly-regression
 
-# Full @regression suite across all three browser engines every night, with an
-# Allure trend report deployed to GitHub Pages via the official Pages action
-# (Settings → Pages → Source: "GitHub Actions"). Smoke (chromium) runs per-push
-# in smoke.yml; this is the deep, cross-browser safety net.
+# Full @regression suite across all three browser engines every night, sharded
+# across parallel runners for speed. Each shard emits its own allure-results; a
+# `report` job merges them into one Allure trend report deployed to GitHub Pages
+# (Settings → Pages → Source: "GitHub Actions"). Smoke (chromium) runs per-push in
+# smoke.yml; this is the deep, cross-browser safety net.
 on:
   schedule:
     - cron: '0 18 * * *' # 18:00 UTC ≈ 01:00 Vietnam time
@@ -21,11 +22,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # ── Run the suite in 3 parallel shards ────────────────────────────────────────
   regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    outputs:
-      result: ${{ steps.regression.outcome }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,12 +39,6 @@ jobs:
         with:
           node-version: 20
           cache: npm
-
-      - name: Setup Java (Allure report generation needs a JRE)
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
 
       - name: Install dependencies
         run: npm ci
@@ -60,6 +58,61 @@ jobs:
       - name: Wait for Juice Shop to be ready
         run: npm run app:wait
 
+      # Fresh container ⇒ full product stock, so cross-browser ordering tests
+      # never hit Juice Shop's finite stock (see docs/exploratory-notes.md).
+      - name: Run @regression (shard ${{ matrix.shard }}/3, all browsers)
+        run: npx playwright test --grep @regression --shard=${{ matrix.shard }}/3
+
+      - name: Tear down Juice Shop
+        if: always()
+        run: docker compose down
+
+      # Always upload this shard's raw Allure results (even on failure) so the
+      # merged report includes failing tests. Filenames are UUIDs ⇒ no collision.
+      - name: Upload shard allure-results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-${{ matrix.shard }}
+          path: allure-results
+          retention-days: 3
+
+  # ── Merge shards into one Allure report (with trend history) ──────────────────
+  report:
+    needs: regression
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java (Allure report generation needs a JRE)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Collect every shard's results into a single allure-results/ directory.
+      - name: Download all shard results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: allure-results-*
+          path: shard-results
+
+      - name: Merge shard results
+        run: |
+          mkdir -p allure-results
+          cp -r shard-results/*/. allure-results/ || true
+
       # Carry Allure trend history across runs (unique key each run, restore the
       # most recent) so the report shows pass/fail trends over time.
       - name: Restore Allure history
@@ -70,47 +123,31 @@ jobs:
           restore-keys: |
             allure-history-
 
-      # Fresh container ⇒ full product stock, so cross-browser ordering tests
-      # never hit Juice Shop's finite stock (see docs/exploratory-notes.md).
-      - name: Run @regression across all browsers
-        id: regression
-        run: npx playwright test --grep @regression
-        continue-on-error: true
-
-      - name: Tear down Juice Shop
-        if: always()
-        run: docker compose down
-
       - name: Generate Allure report (preserving trend history)
-        if: always()
         run: |
           if [ -d allure-history-store ]; then
             cp -r allure-history-store allure-results/history
           fi
+          node scripts/prepare-allure.mjs
           npx allure generate allure-results --clean -o allure-report
           rm -rf allure-history-store
           cp -r allure-report/history allure-history-store
 
       - name: Upload report as the Pages artifact
-        if: always()
         uses: actions/upload-pages-artifact@v3
         with:
           path: allure-report
 
-      - name: Upload raw reports as build artifacts
-        if: always()
+      - name: Upload merged report as a build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nightly-reports
-          path: |
-            allure-report/
-            playwright-report/
+          name: nightly-report
+          path: allure-report/
           retention-days: 14
 
-  # Deploy the Allure report to GitHub Pages (always — a failing run is still
-  # inspectable at the public URL).
+  # ── Deploy the Allure report to GitHub Pages ──────────────────────────────────
   deploy:
-    needs: regression
+    needs: report
     if: always()
     runs-on: ubuntu-latest
     environment:
@@ -121,14 +158,14 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  # Make the overall run red if any test failed (report is already deployed).
+  # ── Make the overall run red if any shard failed (report is already deployed) ──
   status:
     needs: regression
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Fail if regression failed
-        if: needs.regression.outputs.result == 'failure'
+      - name: Fail if any regression shard failed
+        if: needs.regression.result == 'failure'
         run: |
           echo "Regression suite had failures — see the published Allure report."
           exit 1

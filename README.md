@@ -11,9 +11,10 @@ customer journey across **UI and API** — from registration through a completed
 purchase — with the Page Object Model, API-first setup, faker-based data
 factories, and schema-validated contract tests.
 
-> **54 tests · 3 browser engines (162 runs) · fully parallel · 0 hard waits.**
-> Tagged `@smoke` (14) / `@regression` (54) / `@api` (21) / `@security` (5) for CI selection.
-> **Smoke on every push** (chromium) + **nightly cross-browser regression** with an
+> **67 tests · 3 browser engines (201 runs) · fully parallel · 0 hard waits** — plus
+> **9 unit tests** (Vitest) and **2 visual-regression** baselines.
+> Tagged `@smoke` (14) / `@regression` (67) / `@api` (32) / `@security` (7) / `@a11y` / `@performance` / `@visual` for CI selection.
+> **Static + unit + smoke checks on every push** (chromium) + **nightly, sharded, cross-browser regression** with an
 > **[Allure trend report](https://tpqhuy.github.io/QA_Auto_Project_JuiceOWASP/)** published to GitHub Pages.
 
 ---
@@ -36,7 +37,9 @@ It exercises the same skills a QA/QC automation role needs on day one:
 - **UI action → API verify** — drive the browser, then read the REST API to prove the backend agrees (the modern stand-in for a DB check on an API-driven SPA).
 - **Contract testing** — every API response validated against a `zod` schema, not just its status code.
 - **Parallel-safe by construction** — per-test data factories mean zero shared state.
-- **Security-aware** — documented `@security` tests for Juice Shop's intentional SQLi and IDOR flaws.
+- **Security-aware** — documented `@security` tests (SQLi, IDOR, XSS, /ftp exposure) plus defensive checks (JWT-tampering rejected, security headers).
+- **Multiple test types** — accessibility (axe), API-latency budgets, visual regression, and Vitest unit tests for the framework's own helpers.
+- **Shift-left CI** — dependency audit, CodeQL (SAST), Dependabot, and pre-commit hooks stop issues before they land.
 
 ## Tech stack
 
@@ -46,7 +49,11 @@ It exercises the same skills a QA/QC automation role needs on day one:
 | Test data          | `@faker-js/faker`                                |
 | Schema validation  | `zod`                                            |
 | App under test     | OWASP Juice Shop `v17.1.1` (Docker, pinned)      |
+| Unit tests         | Vitest (framework helpers + factories)           |
+| Accessibility      | `@axe-core/playwright`                           |
 | Quality gates      | ESLint (flat config) + Prettier + `tsc --noEmit` |
+| Pre-commit         | husky + lint-staged                              |
+| Security in CI     | `npm audit` · CodeQL (SAST) · Dependabot         |
 
 ## Architecture
 
@@ -77,10 +84,14 @@ src/
 src/pages/checkout/  # address, delivery, payment, order-summary, confirmation
 tests/
 ├── ui/          # auth, catalog, basket, checkout UI suites
-├── api/         # auth, products, basket contract suites
+├── api/         # auth, products, basket, profile, reviews, admin suites
 ├── e2e/         # full purchase journey (register → pay), UI-driven
-└── security/    # documented SQLi / IDOR / XSS / exposure tests
-docs/            # test-strategy · exploratory-notes · test-cases · bug-reports
+├── security/    # SQLi / IDOR / XSS / exposure + JWT-tampering / headers
+├── a11y/        # accessibility (axe) checks
+├── performance/ # API latency-budget smoke
+├── visual/      # visual-regression baselines (chromium)
+└── unit/        # Vitest unit tests (currency, factories)
+docs/            # test-strategy · exploratory-notes · test-cases · adr · bug-reports
 ```
 
 ## Quick start
@@ -106,12 +117,15 @@ Tear down the app with `npm run app:down`.
 
 ```bash
 npm run test:smoke        # @smoke — the "is the store working?" subset (14)
-npm run test:regression   # full regression (54)
+npm run test:regression   # full regression (67), all browsers
 npm run test:api          # API contract suites
 npm run test:ui           # UI suites only
+npm run test:security     # documented vulnerability + defensive tests (7)
+npm run test:a11y         # accessibility (axe)
+npm run test:performance  # API latency budgets
+npm run test:visual       # visual regression (chromium)
+npm run test:unit         # Vitest unit tests (9)
 npm run test:chromium     # single engine (fast dev loop)
-npm run test:firefox      # or :webkit — cross-browser
-npx playwright test --grep @security   # documented vulnerability tests
 npm run report            # open the last Playwright HTML report
 ```
 
@@ -153,13 +167,19 @@ npm run format:check
 - [Test Strategy](docs/test-strategy.md) — scope, risk-based prioritisation, design decisions (interview Q&A).
 - [Exploratory Notes](docs/exploratory-notes.md) — ground-truth selectors, endpoints, and the app quirks the framework handles.
 - [Test Cases & Traceability](docs/test-cases.md) — requirement → test case → spec matrix.
+- [Architecture Decision Records](docs/adr/) — the _why_ behind the framework's structure.
+- [Contributing](CONTRIBUTING.md) — setup, conventions, and the rules every test follows.
 - [Bug Reports](docs/bug-reports/) — JIRA-style defect reports (severity/priority/steps/actual/expected) for issues found while testing.
 
-## Possible extensions
+## Enhancements implemented
 
-- Accessibility (axe) + visual-regression checks.
-- Deeper security suite (JWT tampering, security headers) + `npm audit` / CodeQL / ZAP in CI.
-- Profile-management coverage, test sharding, and performance-latency budgets.
+The [roadmap](docs/roadmap.md)'s recommended enhancements are now in place — see the
+step-by-step write-up in **[docs/roadmap-implementation.md](docs/roadmap-implementation.md)**:
+
+- **New test types** — accessibility (axe), performance latency budgets, visual regression, Vitest unit tests.
+- **Deeper security** — JWT-tampering + security-header tests, `npm audit`, CodeQL (SAST), Dependabot.
+- **Broader coverage** — profile change-password + product reviews; admin-role fixture.
+- **CI/CD & DX** — sharded nightly regression, Allure categories, husky/lint-staged pre-commit, CONTRIBUTING + ADRs.
 
 📄 Full, prioritised roadmap (value vs effort): **[docs/roadmap.md](docs/roadmap.md)**.
 

@@ -19,6 +19,13 @@
     "test:e2e": "playwright test tests/e2e",
     "test:smoke": "playwright test --grep @smoke",
     "test:regression": "playwright test --grep @regression",
+    "test:security": "playwright test --grep @security",
+    "test:a11y": "playwright test tests/a11y",
+    "test:performance": "playwright test tests/performance",
+    "test:visual": "playwright test tests/visual --project=chromium",
+    "test:visual:update": "playwright test tests/visual --project=chromium --update-snapshots",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:chromium": "playwright test --project=chromium",
@@ -26,7 +33,7 @@
     "test:webkit": "playwright test --project=webkit",
     "test:crossbrowser": "playwright test --grep @regression",
     "report": "playwright show-report",
-    "allure:generate": "allure generate allure-results --clean -o allure-report",
+    "allure:generate": "node scripts/prepare-allure.mjs && allure generate allure-results --clean -o allure-report",
     "allure:open": "allure open allure-report",
     "allure:serve": "allure serve allure-results",
     "codegen": "playwright codegen http://localhost:3000",
@@ -34,9 +41,20 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,mts,cts,js,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "^9.13.0",
     "@faker-js/faker": "^9.0.3",
     "@playwright/test": "^1.48.0",
@@ -47,9 +65,12 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-playwright": "^2.0.0",
     "globals": "^15.11.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
     "prettier": "^3.3.3",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.9.0"
+    "typescript-eslint": "^8.9.0",
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

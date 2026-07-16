@@ -111,14 +111,16 @@ per push); the full `@regression` set (52) runs nightly across all three browser
 | CI    | `http://localhost:3000` | container started inside the workflow |
 
 - Parallelism: `fullyParallel`, worker cap tuned to the single-container backend.
-- Full suite wall-clock: **~15s** chromium (52 tests); **~1.6 min** cross-browser
-  (156 runs across chromium/firefox/webkit).
+- Full suite wall-clock: **~30s** chromium (69 cases); cross-browser sharded
+  across 3 runners in the nightly.
 - Browser matrix is expressed as Playwright **projects** — the same config serves
   `@smoke` on chromium (per push) and full regression on all three (nightly).
-- **CI:** `smoke.yml` runs `@smoke` on chromium on every push/PR;
+- **CI:** `smoke.yml` runs static checks + Vitest unit tests + `npm audit`
+  (`checks` job) and `@smoke` on chromium (`smoke` job) on every push/PR;
   `nightly-regression.yml` runs the full `@regression` suite across all three
-  engines on a cron, generating an **Allure trend report** (history preserved)
-  published to **GitHub Pages**.
+  engines, **sharded 3 ways**, merging per-shard results into a single **Allure
+  trend report** (history preserved, failures classified by **categories**)
+  published to **GitHub Pages**. `codeql.yml` adds SAST; Dependabot keeps deps current.
 - **Reporting:** Playwright HTML every run; Allure (`allure-playwright` → `allure`
   CLI, needs a JRE) for the public trend report. Failure diagnostics:
   `trace: on-first-retry`, `screenshot`/`video` on failure.
@@ -141,9 +143,11 @@ per push); the full `@regression` set (52) runs nightly across all three browser
 - [x] Auth, catalog/search, basket, checkout UI suites
 - [x] Auth/products/basket/order API suites with schema validation
 - [x] Full purchase-journey E2E (UI-driven, API-verified)
-- [x] `@smoke`/`@regression`/`@api`/`@security` tagging
-- [x] GitHub Actions smoke pipeline on push/PR
-- [x] Cross-browser green (chromium/firefox/webkit — 162 runs)
-- [x] Allure trend report + nightly cross-browser regression on GitHub Pages
-- [x] 54 tests passing, stable, parallel (~15 s chromium)
-- [x] Docs: strategy, traceability matrix, exploratory notes, JIRA-style bug reports
+- [x] `@smoke`/`@regression`/`@api`/`@security`/`@a11y`/`@performance`/`@visual` tagging
+- [x] GitHub Actions smoke pipeline on push/PR (+ static/unit checks + `npm audit`)
+- [x] Cross-browser green (chromium/firefox/webkit — 201 runs), nightly sharded 3×
+- [x] Allure trend report (with categories) + nightly cross-browser regression on GitHub Pages
+- [x] 67 tests passing, stable, parallel (~30 s chromium) + 9 Vitest unit tests
+- [x] New test types: a11y (axe), performance budgets, visual regression
+- [x] Security depth: JWT-tampering + headers tests, CodeQL, Dependabot
+- [x] Docs: strategy, traceability matrix, exploratory notes, ADRs, CONTRIBUTING, JIRA-style bug reports

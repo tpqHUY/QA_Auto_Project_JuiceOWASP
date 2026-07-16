@@ -17,6 +17,9 @@ const IS_CI = !!process.env.CI;
 
 export default defineConfig({
   testDir: './tests',
+  // `tests/unit/**` holds Vitest specs (framework-logic unit tests). They are run
+  // by Vitest (`npm run test:unit`), not Playwright, so keep the runner out of them.
+  testIgnore: ['**/unit/**'],
   outputDir: './test-results',
   /* Fail fast in CI if someone leaves a test.only in the source. */
   forbidOnly: IS_CI,

@@ -1,0 +1,30 @@
+version: 2
+
+# Keep dependencies, GitHub Actions, and the Juice Shop Docker image current with
+# small, reviewable PRs. Grouped so related bumps land together, not one-per-package.
+updates:
+  # npm dependencies (Playwright, Vitest, ESLint, …)
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        patterns: ['*']
+        update-types: [minor, patch]
+
+  # GitHub Actions used in the workflows
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+
+  # The pinned Juice Shop image in docker-compose.yml
+  - package-ecosystem: docker
+    directory: '/'
+    schedule:
+      interval: weekly

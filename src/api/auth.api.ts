@@ -54,6 +54,29 @@ export class AuthApi extends BaseApi {
   }
 
   /**
+   * Change the logged-in user's password. Juice Shop exposes this as a GET with
+   * query params (`current`, `new`, `repeat`) — set the token first. Returns the
+   * raw response so tests can assert both happy and negative paths.
+   */
+  changePassword(current: string, next: string, repeat: string = next): Promise<APIResponse> {
+    return this.httpGet(ENDPOINTS.changePassword, { current, new: next, repeat });
+  }
+
+  /**
+   * Log in an existing account (no registration) and return a validated session.
+   * Used for pre-seeded accounts like the admin. Throws on failure.
+   */
+  async loginToSession(email: string, password: string): Promise<AuthSession> {
+    const loginRes = await this.login(email, password);
+    if (!loginRes.ok()) {
+      throw new Error(`Login failed (${loginRes.status()}): ${await loginRes.text()}`);
+    }
+    const { authentication } = LoginResponseSchema.parse(await loginRes.json());
+    this.setToken(authentication.token);
+    return { token: authentication.token, bid: authentication.bid, email };
+  }
+
+  /**
    * Register (if needed) + log in, returning a validated session. Throws on any
    * non-happy-path so callers can treat it as "give me a logged-in user".
    */
@@ -62,12 +85,6 @@ export class AuthApi extends BaseApi {
     if (!registerRes.ok()) {
       throw new Error(`Registration failed (${registerRes.status()}): ${await registerRes.text()}`);
     }
-    const loginRes = await this.login(user.email, user.password);
-    if (!loginRes.ok()) {
-      throw new Error(`Login failed (${loginRes.status()}): ${await loginRes.text()}`);
-    }
-    const { authentication } = LoginResponseSchema.parse(await loginRes.json());
-    this.setToken(authentication.token);
-    return { token: authentication.token, bid: authentication.bid, email: user.email };
+    return this.loginToSession(user.email, user.password);
   }
 }

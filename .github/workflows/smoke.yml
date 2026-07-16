@@ -1,7 +1,10 @@
 name: smoke
 
-# Fast feedback on every push / PR: spin up Juice Shop in Docker and run the
-# @smoke suite on chromium. Full cross-browser regression runs nightly (week 5).
+# Fast feedback on every push / PR:
+#  1. `checks`  — static + unit signal with no browser/Docker (typecheck, lint,
+#                 Vitest unit tests, dependency audit). Fails fast, runs in ~1 min.
+#  2. `smoke`   — spin up Juice Shop in Docker and run the @smoke suite on chromium.
+# Full cross-browser regression runs nightly (nightly-regression.yml).
 on:
   push:
     branches: [main, master]
@@ -9,6 +12,38 @@ on:
   workflow_dispatch:
 
 jobs:
+  checks:
+    name: checks (static + unit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests (Vitest)
+        run: npm run test:unit
+
+      # Supply-chain signal (OWASP A06): fail the build on a known high/critical
+      # vulnerability in a dependency. Dependabot (see .github/dependabot.yml)
+      # opens the fix PRs.
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 20
