@@ -171,18 +171,6 @@ npm run format:check
 - [Contributing](CONTRIBUTING.md) — setup, conventions, and the rules every test follows.
 - [Bug Reports](docs/bug-reports/) — JIRA-style defect reports (severity/priority/steps/actual/expected) for issues found while testing.
 
-## Enhancements implemented
-
-The [roadmap](docs/roadmap.md)'s recommended enhancements are now in place — see the
-step-by-step write-up in **[docs/roadmap-implementation.md](docs/roadmap-implementation.md)**:
-
-- **New test types** — accessibility (axe), performance latency budgets, visual regression, Vitest unit tests.
-- **Deeper security** — JWT-tampering + security-header tests, `npm audit`, CodeQL (SAST), Dependabot.
-- **Broader coverage** — profile change-password + product reviews; admin-role fixture.
-- **CI/CD & DX** — sharded nightly regression, Allure categories, husky/lint-staged pre-commit, CONTRIBUTING + ADRs.
-
-📄 Full, prioritised roadmap (value vs effort): **[docs/roadmap.md](docs/roadmap.md)**.
-
 ---
 
 _OWASP Juice Shop is intentionally insecure software for security training. The
